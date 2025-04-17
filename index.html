@@ -1,0 +1,404 @@
+<script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row =>
+                    row.some(cell => cell !== '' && cell !== null && cell !== undefined)
+                );
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+        </script><!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Flappy Kolibri</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      touch-action: none;
+    }
+    canvas {
+      display: block;
+    }
+  </style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.2/p5.min.js"></script>
+</head>
+<body>
+<script>
+let bird, treeImg, pineconeImg, bgImg;
+let birdX, birdY, birdVelocity, gravity;
+let trees = [];
+let pinecones = [];
+let score = 0;
+let gameState = 'start';
+let quiz = null;
+let quizTimer = 0;
+let obstaclesPassed = 0;
+let quizFade = 0;
+let hoverIndex = -1;
+let scaleFactor = 1;
+let confetti = [];
+
+const quizQuestions = [
+  {
+    question: "Welcher Baum ist bekannt für seine weiße Rinde und zitternden Blätter?",
+    options: ["Eiche", "Birke", "Kiefer", "Ahorn"],
+    correct: 1
+  },
+  {
+    question: "Was ist die Hauptenergiequelle für Waldökosysteme?",
+    options: ["Wasser", "Boden", "Sonnenlicht", "Wind"],
+    correct: 2
+  },
+  {
+    question: "Welches Tier ist ein wichtiger Bestäuber in Wäldern?",
+    options: ["Eichhörnchen", "Biene", "Wolf", "Reh"],
+    correct: 1
+  },
+  {
+    question: "Welche Art von Wald wird von immergrünen Bäumen dominiert?",
+    options: ["Laubwald", "Nadelwald", "Tropischer Wald", "Savanne"],
+    correct: 1
+  }
+];
+
+function preload() {
+  try {
+    // Lade das Vogelbild aus dem gleichen Verzeichnis wie die HTML-Datei
+    // Stelle sicher, dass bird.png zusammen mit index.html hochgeladen wird
+    bird = loadImage('bird.png', 
+      () => console.log('Bird loaded successfully'), 
+      () => console.error('Failed to load bird.png - ensure the file is uploaded to the same directory as index.html')
+    );
+    treeImg = loadImage('https://images.pexels.com/photos/1612351/pexels-photo-1612351.jpeg', 
+      () => console.log('Tree loaded'), 
+      () => console.error('Failed to load tree image')
+    );
+    pineconeImg = loadImage('https://images.pexels.com/photos/380284/pexels-photo-380284.jpeg', 
+      () => console.log('Pinecone loaded'), 
+      () => console.error('Failed to load pinecone image')
+    );
+    bgImg = loadImage('https://images.pexels.com/photos/38136/pexels-photo-38136.jpeg', 
+      () => console.log('Background loaded'), 
+      () => console.error('Failed to load background image')
+    );
+  } catch (e) {
+    console.error('Error in preload:', e);
+  }
+}
+
+function setup() {
+  createCanvas(windowWidth, windowHeight);
+  scaleFactor = min(windowWidth / 800, windowHeight / 600);
+  birdX = width / 4;
+  birdY = height / 2;
+  birdVelocity = 0;
+  gravity = 0.8 * scaleFactor;
+  trees = [];
+  pinecones = [];
+  score = 0;
+  obstaclesPassed = 0;
+  gameState = 'start';
+  
+  for (let i = 0; i < 3; i++) {
+    spawnTree(width + i * 300 * scaleFactor);
+  }
+  textFont('Arial');
+}
+
+function draw() {
+  clear();
+  background(0, 100, 0);
+  if (bgImg) {
+    image(bgImg, 0, 0, width, height);
+  }
+
+  if (gameState === 'start') {
+    drawingContext.shadowBlur = 0;
+    fill(255);
+    textAlign(CENTER);
+    textSize(32 * scaleFactor);
+    text("Flappy Kolibri", width / 2, height / 3);
+    textSize(24 * scaleFactor);
+    text("Drück die Leertaste oder tippe, um zu starten!", width / 2, height / 2 + 50 * scaleFactor);
+  } else if (gameState === 'playing') {
+    birdVelocity += gravity;
+    birdY += birdVelocity;
+    // Fallback-Rendering, falls das Bild nicht geladen werden kann
+    if (bird && bird.width > 0) { // Überprüfe, ob das Bild erfolgreich geladen wurde
+      image(bird, birdX - 25 * scaleFactor, birdY - 25 * scaleFactor, 50 * scaleFactor, 50 * scaleFactor);
+    } else {
+      // Zeichne ein rotes Rechteck als Platzhalter, falls das Bild nicht geladen wurde
+      fill(255, 0, 0); // Rotes Rechteck als Fallback
+      rect(birdX - 25 * scaleFactor, birdY - 25 * scaleFactor, 50 * scaleFactor, 50 * scaleFactor);
+    }
+
+    if (birdY > height || birdY < 0) {
+      resetGame();
+    }
+
+    for (let i = trees.length - 1; i >= 0; i--) {
+      let tree = trees[i];
+      tree.x -= 3 * scaleFactor;
+      if (treeImg) {
+        image(treeImg, tree.x, 0, 100 * scaleFactor, tree.gapY - 100 * scaleFactor);
+        image(treeImg, tree.x, tree.gapY + 150 * scaleFactor, 100 * scaleFactor, height - (tree.gapY + 150 * scaleFactor));
+      }
+
+      if (birdX + 25 * scaleFactor > tree.x && birdX - 25 * scaleFactor < tree.x + 100 * scaleFactor) {
+        if (birdY - 25 * scaleFactor < tree.gapY - 100 * scaleFactor || birdY + 25 * scaleFactor > tree.gapY + 150 * scaleFactor) {
+          resetGame();
+        }
+      }
+
+      if (!tree.passed && birdX > tree.x + 100 * scaleFactor) {
+        score += 1;
+        tree.passed = true;
+        obstaclesPassed += 1;
+        if (obstaclesPassed % 3 === 0) {
+          startQuiz();
+        }
+      }
+
+      if (tree.x < -100 * scaleFactor) {
+        trees.splice(i, 1);
+        spawnTree(width);
+      }
+    }
+
+    for (let i = pinecones.length - 1; i >= 0; i--) {
+      let pinecone = pinecones[i];
+      pinecone.x -= 3 * scaleFactor;
+      if (pineconeImg) {
+        image(pineconeImg, pinecone.x, pinecone.y, 30 * scaleFactor, 30 * scaleFactor);
+      }
+
+      if (birdX + 25 * scaleFactor > pinecone.x && birdX - 25 * scaleFactor < pinecone.x + 30 * scaleFactor &&
+          birdY + 25 * scaleFactor > pinecone.y && birdY - 25 * scaleFactor < pinecone.y + 30 * scaleFactor) {
+        score += 5;
+        pinecones.splice(i, 1);
+      }
+
+      if (pinecone.x < -30 * scaleFactor) {
+        pinecones.splice(i, 1);
+      }
+    }
+
+    drawingContext.shadowBlur = 0;
+    drawingContext.shadowColor = 'rgba(0, 0, 0, 0)';
+    fill(255);
+    textSize(32 * scaleFactor);
+    text(`Punkte: ${score}`, width - 150 * scaleFactor, 40 * scaleFactor);
+  } else if (gameState === 'quiz' && quiz) {
+    if (quizFade < 1) {
+      quizFade = min(quizFade + 0.033, 1);
+    }
+
+    drawingContext.shadowBlur = 0;
+    fill(0, 200 * quizFade);
+    rect(0, 0, width, height);
+
+    hoverIndex = -1;
+    for (let i = 0; i < quiz.options.length; i++) {
+      let x = width / 2;
+      let y = height / 2 + i * 60 * scaleFactor - 60 * scaleFactor;
+      let btnWidth = max(300 * scaleFactor, 200);
+      let btnHeight = max(50 * scaleFactor, 50);
+      if (mouseX > x - btnWidth / 2 && mouseX < x + btnWidth / 2 && mouseY > y - btnHeight / 2 && mouseY < y + btnHeight / 2) {
+        hoverIndex = i;
+      }
+    }
+
+    textAlign(CENTER);
+    textSize(32 * scaleFactor);
+    fill(255, 255 * quizFade);
+    stroke(0);
+    strokeWeight(2);
+    text(quiz.question, width / 2, height / 4);
+
+    rectMode(CENTER);
+    for (let i = 0; i < quiz.options.length; i++) {
+      let x = width / 2;
+      let y = height / 2 + i * 60 * scaleFactor - 60 * scaleFactor;
+      let btnWidth = max(300 * scaleFactor, 200);
+      let btnHeight = max(50 * scaleFactor, 50);
+      let baseColor = color(150);
+      let hoverColor = color(100, 150, 255);
+      let buttonColor = hoverIndex === i ? lerpColor(baseColor, hoverColor, 0.5) : baseColor;
+      drawingContext.shadowBlur = 10;
+      drawingContext.shadowColor = 'rgba(0, 0, 0, 0.3)';
+      fill(buttonColor, 255 * quizFade);
+      noStroke();
+      rect(x, y, btnWidth, btnHeight, 10);
+      drawingContext.shadowBlur = 0;
+      drawingContext.shadowColor = 'rgba(0, 0, 0, 0)';
+      fill(255, 255 * quizFade);
+      textSize(20 * scaleFactor);
+      text(quiz.options[i], x, y + 7 * scaleFactor);
+    }
+
+    let timerProgress = quizTimer / (10 * 60);
+    noFill();
+    stroke(100);
+    strokeWeight(8);
+    ellipse(width / 2, height - 80 * scaleFactor, 60 * scaleFactor, 60 * scaleFactor);
+    stroke(100, 150, 255, 255 * quizFade);
+    arc(width / 2, height - 80 * scaleFactor, 60 * scaleFactor, 60 * scaleFactor, -PI / 2, -PI / 2 + 2 * PI * timerProgress);
+    fill(255, 255 * quizFade);
+    noStroke();
+    textSize(20 * scaleFactor);
+    text(ceil(quizTimer / 60), width / 2, height - 75 * scaleFactor);
+
+    quizTimer--;
+    if (quizTimer <= 0) {
+      resetGame();
+    }
+  } else if (gameState === 'gameover') {
+    drawingContext.shadowBlur = 0;
+    fill(0, 200);
+    rect(0, 0, width, height);
+    fill(255);
+    textSize(32 * scaleFactor);
+    textAlign(CENTER);
+    text(`Punkte: ${score}`, width / 2, height / 2 - 20 * scaleFactor);
+    text("Drücke die Leertaste um neu zu starten", width / 2, height / 2 + 30 * scaleFactor);
+
+    if (confetti.length === 0) {
+      for (let i = 0; i < 100; i++) {
+        confetti.push({
+          x: random(width),
+          y: random(-50, 0),
+          size: random(5, 15) * scaleFactor,
+          speed: random(2, 5) * scaleFactor,
+          color: color(random(255), random(255), random(255)),
+          rotation: random(TWO_PI),
+          rotSpeed: random(-0.1, 0.1)
+        });
+      }
+    }
+
+    for (let i = confetti.length - 1; i >= 0; i--) {
+      let c = confetti[i];
+      c.y += c.speed;
+      c.rotation += c.rotSpeed;
+      push();
+      translate(c.x, c.y);
+      rotate(c.rotation);
+      fill(c.color);
+      rect(0, 0, c.size, c.size);
+      pop();
+      if (c.y > height) {
+        confetti.splice(i, 1);
+      }
+    }
+  }
+}
+
+function keyPressed() {
+  if (key === ' ' && gameState === 'start') {
+    startGame();
+  } else if (key === ' ' && gameState === 'playing') {
+    birdVelocity = -12 * scaleFactor;
+  } else if (key === ' ' && gameState === 'gameover') {
+    setup();
+  }
+}
+
+function mousePressed() {
+  handleInput();
+}
+
+function touchStarted() {
+  handleInput();
+  return false;
+}
+
+function handleInput() {
+  if (gameState === 'start') {
+    startGame();
+  } else if (gameState === 'playing') {
+    birdVelocity = -12 * scaleFactor;
+  } else if (gameState === 'quiz' && quiz) {
+    for (let i = 0; i < quiz.options.length; i++) {
+      let x = width / 2;
+      let y = height / 2 + i * 60 * scaleFactor - 60 * scaleFactor;
+      let btnWidth = max(300 * scaleFactor, 200);
+      let btnHeight = max(50 * scaleFactor, 50);
+      let touchX = mouseX;
+      let touchY = mouseY;
+      if (touchX > x - btnWidth / 2 && touchX < x + btnWidth / 2 && touchY > y - btnHeight / 2 && touchY < y + btnHeight / 2) {
+        if (i === quiz.correct) {
+          gameState = 'playing';
+          quiz = null;
+        } else {
+          resetGame();
+        }
+        break;
+      }
+    }
+  } else if (gameState === 'gameover') {
+    setup();
+  }
+}
+
+function startGame() {
+  gameState = 'playing';
+}
+
+function spawnTree(x) {
+  let minGap = 150 * scaleFactor;
+  let maxGap = 400 * scaleFactor;
+  let gapRange = maxGap - minGap;
+  let difficultyFactor = constrain(score / 50, 0, 1);
+  let gapSize = maxGap - gapRange * difficultyFactor;
+  let gapY = random(gapSize, height - gapSize - 150 * scaleFactor);
+  trees.push({ x: x, gapY: gapY, passed: false });
+  if (random() < 0.5) {
+    pinecones.push({ x: x + 150 * scaleFactor, y: gapY + 25 * scaleFactor });
+  }
+}
+
+function startQuiz() {
+  gameState = 'quiz';
+  quiz = random(quizQuestions);
+  quizTimer = 10 * 60;
+  quizFade = 0;
+}
+
+function resetGame() {
+  gameState = 'gameover';
+  confetti = [];
+}
+
+function windowResized() {
+  resizeCanvas(windowWidth, windowHeight);
+  scaleFactor = min(windowWidth / 800, windowHeight / 600);
+  birdX = width / 4;
+  birdY = height / 2;
+}
+</script>
+</body>
+</html>
