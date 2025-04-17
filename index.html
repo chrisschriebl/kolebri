@@ -27,7 +27,7 @@
         }
         return gk_fileData[filename] || "";
         }
-        </script><!DOCTYPE html>
+       <!DOCTYPE html>
 <html lang="de">
 <head>
   <meta charset="UTF-8">
@@ -44,6 +44,7 @@
       display: block;
     }
   </style>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.2/p5.min.js"></script>
 </head>
 <body>
@@ -64,42 +65,132 @@ let confetti = [];
 
 const quizQuestions = [
   {
-    question: "Welcher Baum ist bekannt für seine weiße Rinde und zitternden Blätter?",
-    options: ["Eiche", "Birke", "Kiefer", "Ahorn"],
-    correct: 1
-  },
-  {
-    question: "Was ist die Hauptenergiequelle für Waldökosysteme?",
-    options: ["Wasser", "Boden", "Sonnenlicht", "Wind"],
+    question: "Welcher Baum verströmt im Sommer einen besonders süßen Duft?",
+    options: ["Birke", "Ahorn", "Linde", "Tanne"],
     correct: 2
   },
   {
-    question: "Welches Tier ist ein wichtiger Bestäuber in Wäldern?",
-    options: ["Eichhörnchen", "Biene", "Wolf", "Reh"],
+    question: "Welcher Baum hat weiße, schimmernde Rinde?",
+    options: ["Buche", "Birke", "Eiche", "Hainbuche"],
     correct: 1
   },
   {
-    question: "Welche Art von Wald wird von immergrünen Bäumen dominiert?",
-    options: ["Laubwald", "Nadelwald", "Tropischer Wald", "Savanne"],
+    question: "Welcher Baum verliert als Nadelbaum im Herbst seine Nadeln?",
+    options: ["Fichte", "Kiefer", "Tanne", "Lärche"],
+    correct: 3
+  },
+  {
+    question: "Welche Baumart bildet kleine „Propeller“-Samen aus?",
+    options: ["Eiche", "Tulpenbaum", "Ahorn", "Hainbuche"],
+    correct: 2
+  },
+  {
+    question: "Welcher Baum hat tief eingeschnittene Blätter und bildet Eicheln?",
+    options: ["Ahorn", "Buche", "Eiche", "Kirsche"],
+    correct: 2
+  },
+  {
+    question: "Welcher Baum hat auffällige, trompetenförmige Blüten?",
+    options: ["Linde", "Tulpenbaum", "Ahorn", "Tanne"],
+    correct: 1
+  },
+  {
+    question: "Welcher Baum ist mit Weihnachten besonders verbunden?",
+    options: ["Tanne", "Birke", "Kirsche", "Linde"],
+    correct: 0
+  },
+  {
+    question: "Welche Blätter sind herzförmig?",
+    options: ["Eichenblätter", "Lindenblätter", "Ahornblätter", "Buchenblätter"],
+    correct: 1
+  },
+  {
+    question: "Welche Baumart hat eine sehr dichte Krone und ledrige Blätter?",
+    options: ["Hainbuche", "Ahorn", "Kirsche", "Birke"],
+    correct: 0
+  },
+  {
+    question: "Welcher Baum ist im Frühling mit rosa oder weißen Blüten bedeckt?",
+    options: ["Tulpenbaum", "Buche", "Kirsche", "Weide"],
+    correct: 2
+  },
+  {
+    question: "Welche Baumart ist besonders biegsam und oft in Wassernähe zu finden?",
+    options: ["Linde", "Birke", "Weide", "Buche"],
+    correct: 2
+  },
+  {
+    question: "Wie viele unterschiedliche Baumarten kann man entlang des Lehrpfades entdecken?",
+    options: ["7", "9", "11", "13"],
+    correct: 2
+  },
+  {
+    question: "Welche Baumart ist sowohl in Baumraum 1, 2 als auch 3 vertreten?",
+    options: ["Tanne", "Tulpenbaum", "Birke", "Kirsche"],
+    correct: 2
+  },
+  {
+    question: "Wo beginnt der Baumlehrpfad?",
+    options: ["Bei der Turnhalle", "Beim Schulbüro", "Beim JUZ / Parkplatz", "Beim Fußballfeld"],
+    correct: 2
+  },
+  {
+    question: "Welche Baumart hat eine besonders glatte und graue Rinde?",
+    options: ["Hainbuche", "Buche", "Eiche", "Ahorn"],
     correct: 1
   }
 ];
 
+// Funktion zum Umbrechen des Textes
+function wrapText(text, maxWidth) {
+  console.log('wrapText aufgerufen mit text:', text, 'maxWidth:', maxWidth);
+  if (!text || text.trim() === '') {
+    console.log('wrapText: Text ist leer oder undefiniert, gebe leeres Array zurück');
+    return [''];
+  }
+
+  textSize(32 * scaleFactor);
+  textFont('Montserrat');
+
+  let words = text.split(' ');
+  if (words.length === 0) {
+    console.log('wrapText: Keine Wörter gefunden, gebe leeres Array zurück');
+    return [''];
+  }
+
+  let lines = [];
+  let currentLine = words[0];
+
+  for (let i = 1; i < words.length; i++) {
+    let testLine = currentLine + ' ' + words[i];
+    let testWidth = drawingContext.textWidth(testLine);
+    if (testWidth <= maxWidth) {
+      currentLine = testLine;
+    } else {
+      lines.push(currentLine);
+      currentLine = words[i];
+    }
+  }
+  lines.push(currentLine);
+  console.log('wrapText: Lines erstellt:', lines);
+  return lines;
+}
+
 function preload() {
   try {
-    // Lade das Vogelbild aus dem gleichen Verzeichnis wie die HTML-Datei
-    // Stelle sicher, dass bird.png zusammen mit index.html hochgeladen wird
+    // Lade die Bilder lokal aus dem GitHub-Repository
+    // Stelle sicher, dass bird.png und zapfen.png im gleichen Verzeichnis wie index.html im Repository liegen
     bird = loadImage('bird.png', 
       () => console.log('Bird loaded successfully'), 
-      () => console.error('Failed to load bird.png - ensure the file is uploaded to the same directory as index.html')
+      () => console.error('Failed to load bird.png - ensure the file is in the same directory as index.html in your GitHub repository')
     );
     treeImg = loadImage('https://images.pexels.com/photos/1612351/pexels-photo-1612351.jpeg', 
       () => console.log('Tree loaded'), 
       () => console.error('Failed to load tree image')
     );
-    pineconeImg = loadImage('https://images.pexels.com/photos/380284/pexels-photo-380284.jpeg', 
-      () => console.log('Pinecone loaded'), 
-      () => console.error('Failed to load pinecone image')
+    pineconeImg = loadImage('zapfen.png', 
+      () => console.log('Zapfen loaded successfully'), 
+      () => console.error('Failed to load zapfen.png - ensure the file is in the same directory as index.html in your GitHub repository')
     );
     bgImg = loadImage('https://images.pexels.com/photos/38136/pexels-photo-38136.jpeg', 
       () => console.log('Background loaded'), 
@@ -126,7 +217,7 @@ function setup() {
   for (let i = 0; i < 3; i++) {
     spawnTree(width + i * 300 * scaleFactor);
   }
-  textFont('Arial');
+  textFont('Montserrat');
 }
 
 function draw() {
@@ -137,22 +228,49 @@ function draw() {
   }
 
   if (gameState === 'start') {
-    drawingContext.shadowBlur = 0;
-    fill(255);
+    fill(0, 0, 0, 200);
+    rect(0, 0, width, height);
+
     textAlign(CENTER);
-    textSize(32 * scaleFactor);
+    drawingContext.shadowBlur = 10;
+    drawingContext.shadowColor = 'rgba(255, 255, 255, 0.5)';
+    fill(255);
+    textSize(48 * scaleFactor);
     text("Flappy Kolibri", width / 2, height / 3);
+    drawingContext.shadowBlur = 0;
+
+    let btnWidth = max(200 * scaleFactor, 200);
+    let btnHeight = max(60 * scaleFactor, 60);
+    let btnX = width / 2;
+    let btnY = height / 2 + 50 * scaleFactor;
+    hoverIndex = -1;
+    if (mouseX > btnX - btnWidth / 2 && mouseX < btnX + btnWidth / 2 &&
+        mouseY > btnY - btnHeight / 2 && mouseY < btnY + btnHeight / 2) {
+      hoverIndex = 0;
+    }
+    let baseColor = color(50, 150, 255);
+    let hoverColor = color(100, 200, 255);
+    let buttonColor = hoverIndex === 0 ? hoverColor : baseColor;
+    drawingContext.shadowBlur = 10;
+    drawingContext.shadowColor = 'rgba(0, 0, 0, 0.3)';
+    fill(buttonColor);
+    noStroke();
+    rectMode(CENTER);
+    rect(btnX, btnY, btnWidth, btnHeight, 15);
+    drawingContext.shadowBlur = 0;
+    drawingContext.shadowBlur = 5;
+    drawingContext.shadowColor = 'rgba(0, 0, 0, 0.5)';
+    fill(255);
     textSize(24 * scaleFactor);
-    text("Drück die Leertaste oder tippe, um zu starten!", width / 2, height / 2 + 50 * scaleFactor);
+    text("Spiel Starten", btnX, btnY + 7 * scaleFactor);
+    drawingContext.shadowBlur = 0;
   } else if (gameState === 'playing') {
     birdVelocity += gravity;
     birdY += birdVelocity;
-    // Fallback-Rendering, falls das Bild nicht geladen werden kann
-    if (bird && bird.width > 0) { // Überprüfe, ob das Bild erfolgreich geladen wurde
+    if (bird && bird.width > 0) {
       image(bird, birdX - 25 * scaleFactor, birdY - 25 * scaleFactor, 50 * scaleFactor, 50 * scaleFactor);
     } else {
-      // Zeichne ein rotes Rechteck als Platzhalter, falls das Bild nicht geladen wurde
-      fill(255, 0, 0); // Rotes Rechteck als Fallback
+      fill(255, 0, 0);
       rect(birdX - 25 * scaleFactor, birdY - 25 * scaleFactor, 50 * scaleFactor, 50 * scaleFactor);
     }
 
@@ -207,70 +325,118 @@ function draw() {
       }
     }
 
-    drawingContext.shadowBlur = 0;
-    drawingContext.shadowColor = 'rgba(0, 0, 0, 0)';
+    drawingContext.shadowBlur = 5;
+    drawingContext.shadowColor = 'rgba(0, 0, 0, 0.5)';
     fill(255);
     textSize(32 * scaleFactor);
     text(`Punkte: ${score}`, width - 150 * scaleFactor, 40 * scaleFactor);
+    drawingContext.shadowBlur = 0;
   } else if (gameState === 'quiz' && quiz) {
     if (quizFade < 1) {
-      quizFade = min(quizFade + 0.033, 1);
+      quizFade = min(quizFade + 0.02, 1);
     }
 
-    drawingContext.shadowBlur = 0;
-    fill(0, 200 * quizFade);
+    fill(0, 0, 0, 200 * quizFade);
     rect(0, 0, width, height);
 
-    hoverIndex = -1;
-    for (let i = 0; i < quiz.options.length; i++) {
-      let x = width / 2;
-      let y = height / 2 + i * 60 * scaleFactor - 60 * scaleFactor;
-      let btnWidth = max(300 * scaleFactor, 200);
-      let btnHeight = max(50 * scaleFactor, 50);
-      if (mouseX > x - btnWidth / 2 && mouseX < x + btnWidth / 2 && mouseY > y - btnHeight / 2 && mouseY < y + btnHeight / 2) {
-        hoverIndex = i;
-      }
+    let questionWidth = width * 0.8;
+    let padding = 20 * scaleFactor;
+    let lines = [];
+    if (quiz && quiz.question) {
+      console.log('Quiz-Frage:', quiz.question);
+      lines = wrapText(quiz.question, questionWidth - 2 * padding);
+    } else {
+      console.error('Quiz oder quiz.question ist nicht definiert:', quiz);
+      lines = ['Fehler: Frage nicht verfügbar'];
     }
+    let lineHeight = 40 * scaleFactor;
+    let questionHeight = (lines.length * lineHeight) + 2 * padding;
+    let questionX = width / 2;
+    let questionY = height / 4;
+
+    drawingContext.shadowBlur = 10;
+    drawingContext.shadowColor = 'rgba(0, 0, 0, 0.3)';
+    fill(255, 255 * quizFade);
+    rectMode(CENTER);
+    rect(questionX, questionY, questionWidth, questionHeight, 15);
+    drawingContext.shadowBlur = 0;
 
     textAlign(CENTER);
     textSize(32 * scaleFactor);
-    fill(255, 255 * quizFade);
-    stroke(0);
-    strokeWeight(2);
-    text(quiz.question, width / 2, height / 4);
+    drawingContext.shadowBlur = 5;
+    drawingContext.shadowColor = 'rgba(0, 0, 0, 0.5)';
+    fill(0);
+    for (let i = 0; i < lines.length; i++) {
+      let lineY = questionY - (questionHeight / 2) + padding + (i * lineHeight);
+      text(lines[i], questionX, lineY);
+    }
+    drawingContext.shadowBlur = 0;
+
+    const buttonColors = [
+      [color(255, 99, 71), color(255, 140, 0)],
+      [color(50, 205, 50), color(0, 255, 127)],
+      [color(30, 144, 255), color(0, 191, 255)],
+      [color(255, 215, 0), color(255, 165, 0)]
+    ];
 
     rectMode(CENTER);
     for (let i = 0; i < quiz.options.length; i++) {
       let x = width / 2;
-      let y = height / 2 + i * 60 * scaleFactor - 60 * scaleFactor;
-      let btnWidth = max(300 * scaleFactor, 200);
-      let btnHeight = max(50 * scaleFactor, 50);
-      let baseColor = color(150);
-      let hoverColor = color(100, 150, 255);
-      let buttonColor = hoverIndex === i ? lerpColor(baseColor, hoverColor, 0.5) : baseColor;
+      let y = height / 2 + i * 80 * scaleFactor - 40 * scaleFactor;
+      let btnWidth = max(350 * scaleFactor, 250);
+      let btnHeight = max(70 * scaleFactor, 60);
+      let scale = 1;
+      
+      if (mouseX > x - btnWidth / 2 && mouseX < x + btnWidth / 2 && mouseY > y - btnHeight / 2 && mouseY < y + btnHeight / 2) {
+        hoverIndex = i;
+        scale = 1.1;
+      } else if (hoverIndex === i) {
+        hoverIndex = -1;
+      }
+
       drawingContext.shadowBlur = 10;
       drawingContext.shadowColor = 'rgba(0, 0, 0, 0.3)';
-      fill(buttonColor, 255 * quizFade);
-      noStroke();
-      rect(x, y, btnWidth, btnHeight, 10);
+      let gradient = drawingContext.createLinearGradient(x - btnWidth / 2, y, x + btnWidth / 2, y);
+      gradient.addColorStop(0, buttonColors[i][0]);
+      gradient.addColorStop(1, buttonColors[i][1]);
+      drawingContext.fillStyle = gradient;
+      rect(x, y, btnWidth * scale, btnHeight * scale, 15);
       drawingContext.shadowBlur = 0;
-      drawingContext.shadowColor = 'rgba(0, 0, 0, 0)';
+
+      drawingContext.shadowBlur = 5;
+      drawingContext.shadowColor = 'rgba(0, 0, 0, 0.5)';
       fill(255, 255 * quizFade);
-      textSize(20 * scaleFactor);
-      text(quiz.options[i], x, y + 7 * scaleFactor);
+      textSize(24 * scaleFactor);
+      text(quiz.options[i], x, y + 8 * scaleFactor);
+      drawingContext.shadowBlur = 0;
     }
 
+    let barWidth = max(300 * scaleFactor, 200);
+    let barHeight = max(20 * scaleFactor, 15);
+    let barX = width / 2;
+    let barY = height - 60 * scaleFactor;
     let timerProgress = quizTimer / (10 * 60);
-    noFill();
-    stroke(100);
-    strokeWeight(8);
-    ellipse(width / 2, height - 80 * scaleFactor, 60 * scaleFactor, 60 * scaleFactor);
-    stroke(100, 150, 255, 255 * quizFade);
-    arc(width / 2, height - 80 * scaleFactor, 60 * scaleFactor, 60 * scaleFactor, -PI / 2, -PI / 2 + 2 * PI * timerProgress);
+    let filledWidth = barWidth * timerProgress;
+
+    drawingContext.shadowBlur = 5;
+    drawingContext.shadowColor = 'rgba(0, 0, 0, 0.3)';
+    fill(100);
+    rect(barX, barY, barWidth, barHeight, 10);
+    let gradient = drawingContext.createLinearGradient(barX - barWidth / 2, barY, barX + barWidth / 2, barY);
+    gradient.addColorStop(0, color(255, 99, 71));
+    gradient.addColorStop(1, color(255, 215, 0));
+    drawingContext.fillStyle = gradient;
+    rectMode(CORNER);
+    rect(barX - barWidth / 2, barY - barHeight / 2, filledWidth, barHeight, 10);
+    rectMode(CENTER);
+    drawingContext.shadowBlur = 0;
+
+    drawingContext.shadowBlur = 3;
+    drawingContext.shadowColor = 'rgba(0, 0, 0, 0.5)';
     fill(255, 255 * quizFade);
-    noStroke();
-    textSize(20 * scaleFactor);
-    text(ceil(quizTimer / 60), width / 2, height - 75 * scaleFactor);
+    textSize(16 * scaleFactor);
+    text(ceil(quizTimer / 60), barX, barY + 5 * scaleFactor);
+    drawingContext.shadowBlur = 0;
 
     quizTimer--;
     if (quizTimer <= 0) {
@@ -280,11 +446,14 @@ function draw() {
     drawingContext.shadowBlur = 0;
     fill(0, 200);
     rect(0, 0, width, height);
+    drawingContext.shadowBlur = 5;
+    drawingContext.shadowColor = 'rgba(0, 0, 0, 0.5)';
     fill(255);
     textSize(32 * scaleFactor);
     textAlign(CENTER);
     text(`Punkte: ${score}`, width / 2, height / 2 - 20 * scaleFactor);
     text("Drücke die Leertaste um neu zu starten", width / 2, height / 2 + 30 * scaleFactor);
+    drawingContext.shadowBlur = 0;
 
     if (confetti.length === 0) {
       for (let i = 0; i < 100; i++) {
@@ -338,15 +507,22 @@ function touchStarted() {
 
 function handleInput() {
   if (gameState === 'start') {
-    startGame();
+    let btnWidth = max(200 * scaleFactor, 200);
+    let btnHeight = max(60 * scaleFactor, 60);
+    let btnX = width / 2;
+    let btnY = height / 2 + 50 * scaleFactor;
+    if (mouseX > btnX - btnWidth / 2 && mouseX < btnX + btnWidth / 2 &&
+        mouseY > btnY - btnHeight / 2 && mouseY < btnY + btnHeight / 2) {
+      startGame();
+    }
   } else if (gameState === 'playing') {
     birdVelocity = -12 * scaleFactor;
   } else if (gameState === 'quiz' && quiz) {
     for (let i = 0; i < quiz.options.length; i++) {
       let x = width / 2;
-      let y = height / 2 + i * 60 * scaleFactor - 60 * scaleFactor;
-      let btnWidth = max(300 * scaleFactor, 200);
-      let btnHeight = max(50 * scaleFactor, 50);
+      let y = height / 2 + i * 80 * scaleFactor - 40 * scaleFactor;
+      let btnWidth = max(350 * scaleFactor, 250);
+      let btnHeight = max(70 * scaleFactor, 60);
       let touchX = mouseX;
       let touchY = mouseY;
       if (touchX > x - btnWidth / 2 && touchX < x + btnWidth / 2 && touchY > y - btnHeight / 2 && touchY < y + btnHeight / 2) {
@@ -382,10 +558,16 @@ function spawnTree(x) {
 }
 
 function startQuiz() {
+  console.log('startQuiz aufgerufen');
   gameState = 'quiz';
   quiz = random(quizQuestions);
+  if (!quiz || !quiz.question) {
+    console.error('Quiz konnte nicht initialisiert werden:', quiz);
+    quiz = { question: 'Fehler: Frage nicht verfügbar', options: ['Option 1', 'Option 2', 'Option 3', 'Option 4'], correct: 0 };
+  }
   quizTimer = 10 * 60;
   quizFade = 0;
+  console.log('Quiz initialisiert:', quiz);
 }
 
 function resetGame() {
