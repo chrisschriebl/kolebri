@@ -324,7 +324,7 @@ function draw() {
       drawingContext.shadowBlur = 5;
       drawingContext.shadowColor = 'rgba(0, 0, 0, 0.5)';
       fill(255);
-      textSize(24 * scaleFactor);
+      textSize(20 * scaleFactor);
       text("Spiel hier starten", btnX, btnY + 7 * scaleFactor);
       drawingContext.shadowBlur = 0;
 
@@ -559,7 +559,7 @@ function draw() {
         drawingContext.shadowBlur = 0;
       }
 
-      let timerRadius = 60 * scaleFactor;
+      let timerRadius = 39 * scaleFactor;
       let timerX = width * 0.75;
       let timerY = height * 0.4 + 1.5 * buttonSpacing;
       let timerProgress = quizTimer / (15 * 60);
@@ -579,8 +579,8 @@ function draw() {
       drawingContext.shadowBlur = 3;
       drawingContext.shadowColor = 'rgba(0, 0, 0, 0.5)';
       fill(255, 255 * quizFade);
-      textSize(40 * scaleFactor);
-      text(ceil(quizTimer / 60), timerX, timerY + 14 * scaleFactor);
+      textSize(26 * scaleFactor);
+      text(ceil(quizTimer / 60), timerX, timerY + 9 * scaleFactor);
       drawingContext.shadowBlur = 0;
 
       quizTimer--;
@@ -803,13 +803,13 @@ function spawnTree(x) {
       let region = floor(random(3));
       let pineconeX;
       if (region === 0 && gapY >= 100 * scaleFactor) {
-        pineconeY = random(50 * scaleFactor, gapY - 50 * scaleFactor);
+        pineconeY = random(height * 0.25, gapY - 50 * scaleFactor);
         pineconeX = x + (150 - 30 * pineconeDifficulty) * scaleFactor;
       } else if (region === 1) {
         pineconeY = random(gapY + 50 * scaleFactor, gapY + gapSize - 50 * scaleFactor);
         pineconeX = x + (50 - 30 * pineconeDifficulty) * scaleFactor;
       } else if (region === 2 && gapY + gapSize <= height - 100 * scaleFactor) {
-        pineconeY = random(gapY + gapSize + 50 * scaleFactor, height - 50 * scaleFactor);
+        pineconeY = random(gapY + gapSize + 50 * scaleFactor, height * 0.75);
         pineconeX = x + (150 - 30 * pineconeDifficulty) * scaleFactor;
       } else {
         pineconeY = random(gapY + 50 * scaleFactor, gapY + gapSize - 50 * scaleFactor);
