@@ -211,8 +211,10 @@ function setup() {
   }
   currentQuestionIndex = 0;
   
+  // Größerer Abstand zwischen Bäumen im Hochformat
+  let treeSpacing = windowWidth < windowHeight ? 400 * scaleFactor : 300 * scaleFactor;
   for (let i = 0; i < 3; i++) {
-    spawnTree(width + i * 300 * scaleFactor);
+    spawnTree(width + i * treeSpacing);
   }
   textFont('Montserrat');
 }
@@ -299,6 +301,8 @@ function draw() {
     fill(255);
     textSize(20 * scaleFactor);
     text("oder Leertaste drücken", width / 2, btnY + btnHeight / 2 + 30 * scaleFactor);
+    // Neuer Hinweis für Querformat
+    text("Bitte im Querformat spielen", width / 2, btnY + btnHeight / 2 + 50 * scaleFactor);
     drawingContext.shadowBlur = 0;
   } else if (gameState === 'playing') {
     if (startDelayTimer > 0) {
@@ -463,10 +467,10 @@ function draw() {
 
     rectMode(CENTER);
     let btnWidth = max(350 * scaleFactor, 250);
-    let btnHeight = windowWidth < 768 ? max(60 * scaleFactor, 50) : max(70 * scaleFactor, 60); // Ursprüngliche Höhe für PC
+    let btnHeight = windowWidth < 768 ? max(60 * scaleFactor, 50) : max(70 * scaleFactor, 60);
     let maxButtonWidth = btnWidth * 0.9;
     let baseAnswerFontSize = 24 * scaleFactor;
-    let buttonSpacing = windowWidth < 768 ? 120 * scaleFactor : 80 * scaleFactor; // Ursprünglicher Abstand für PC
+    let buttonSpacing = windowWidth < 768 ? 100 * scaleFactor : 80 * scaleFactor; // Kompakter auf Smartphone
 
     let longestAnswer = quiz.options.reduce((a, b) => a.length > b.length ? a : b, '');
     textSize(baseAnswerFontSize);
@@ -652,7 +656,7 @@ function handleInput() {
   } else if (gameState === 'quiz' && quiz) {
     for (let i = 0; i < quiz.options.length; i++) {
       let x = width / 2;
-      let y = windowWidth < 768 ? (height / 2 - 80 * scaleFactor + i * 120 * scaleFactor) : (height / 2 + i * 80 * scaleFactor - 40 * scaleFactor);
+      let y = windowWidth < 768 ? (height / 2 - 80 * scaleFactor + i * 100 * scaleFactor) : (height / 2 + i * 80 * scaleFactor - 40 * scaleFactor);
       let btnWidth = max(350 * scaleFactor, 250);
       let btnHeight = windowWidth < 768 ? max(60 * scaleFactor, 50) : max(70 * scaleFactor, 60);
       let touchX = mouseX;
@@ -693,12 +697,12 @@ function startGame() {
 }
 
 function spawnTree(x) {
-  let minGap = windowWidth < 768 ? 300 * scaleFactor : 200 * scaleFactor; // Sehr große Lücke auf Smartphone/Tablet
+  let minGap = windowWidth < windowHeight ? 350 * scaleFactor : (windowWidth < 768 ? 300 * scaleFactor : 200 * scaleFactor); // Größere Lücke im Hochformat
   let maxGap = 400 * scaleFactor;
   let gapRange = maxGap - minGap;
   let difficultyFactor = windowWidth < 768 ? 0 : constrain(score / 100, 0, 1); // Keine Schwierigkeitssteigerung auf Smartphone/Tablet
   let gapSize = maxGap - gapRange * difficultyFactor;
-  let gapY = windowWidth < 768 ? random(height / 4, 3 * height / 4) : random(max(100 * scaleFactor, gapSize), min(height - gapSize - 100 * scaleFactor, height - 100 * scaleFactor));
+  let gapY = windowWidth < windowHeight ? random(height / 3, 2 * height / 3) : (windowWidth < 768 ? random(height / 4, 3 * height / 4) : random(max(100 * scaleFactor, gapSize), min(height - gapSize - 100 * scaleFactor, height - 100 * scaleFactor)));
   trees.push({ x: x, gapY: gapY, passed: false });
   if (random() < 0.7) {
     // Dynamischer Abstand für Zapfen basierend auf obstaclesPassed
