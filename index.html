@@ -313,7 +313,7 @@ function draw() {
       }
       let baseColor = color(139, 69, 19);
       let hoverColor = color(92, 46, 13);
-      let buttonColor = hoverIndex == 0 ? hoverColor : baseColor;
+      let buttonColor = hoverIndex === 0 ? hoverColor : baseColor;
       drawingContext.shadowBlur = 10;
       drawingContext.shadowColor = 'rgba(0, 0, 0, 0.3)';
       fill(buttonColor);
@@ -325,7 +325,7 @@ function draw() {
       drawingContext.shadowColor = 'rgba(0, 0, 0, 0.5)';
       fill(255);
       textSize(24 * scaleFactor);
-      text("Spiel starten", btnX, btnY + 7 * scaleFactor);
+      text("Spiel hier starten", btnX, btnY + 7 * scaleFactor);
       drawingContext.shadowBlur = 0;
 
       drawingContext.shadowBlur = 5;
@@ -559,8 +559,8 @@ function draw() {
         drawingContext.shadowBlur = 0;
       }
 
-      let timerRadius = 30 * scaleFactor;
-      let timerX = width * 0.85;
+      let timerRadius = 60 * scaleFactor;
+      let timerX = width * 0.75;
       let timerY = height * 0.4 + 1.5 * buttonSpacing;
       let timerProgress = quizTimer / (15 * 60);
 
@@ -579,8 +579,8 @@ function draw() {
       drawingContext.shadowBlur = 3;
       drawingContext.shadowColor = 'rgba(0, 0, 0, 0.5)';
       fill(255, 255 * quizFade);
-      textSize(20 * scaleFactor);
-      text(ceil(quizTimer / 60), timerX, timerY + 7 * scaleFactor);
+      textSize(40 * scaleFactor);
+      text(ceil(quizTimer / 60), timerX, timerY + 14 * scaleFactor);
       drawingContext.shadowBlur = 0;
 
       quizTimer--;
@@ -752,7 +752,7 @@ function handleInput() {
             score += 10;
             quizResultMessage = 'Richtig!';
           } else {
-            quizResultMessage = 'Falsch!';
+            quizResultMessage = 'Leider falsch!';
           }
           gameState = 'quizResult';
           quizResultTimer = 120;
@@ -798,9 +798,24 @@ function spawnTree(x) {
     let maxY = height * 0.8 - gapSize;
     let gapY = random(minY, maxY);
     trees.push({ x: x, gapY: gapY, passed: false });
-    if (random() < 0.7) {
-      let pineconeY = random(gapY + 50 * scaleFactor, gapY + gapSize - 50 * scaleFactor);
-      pinecones.push({ x: x + (50 - 30 * pineconeDifficulty) * scaleFactor, y: pineconeY });
+    if (random() < 0.9) {
+      let pineconeY;
+      let region = floor(random(3));
+      let pineconeX;
+      if (region === 0 && gapY >= 100 * scaleFactor) {
+        pineconeY = random(50 * scaleFactor, gapY - 50 * scaleFactor);
+        pineconeX = x + (150 - 30 * pineconeDifficulty) * scaleFactor;
+      } else if (region === 1) {
+        pineconeY = random(gapY + 50 * scaleFactor, gapY + gapSize - 50 * scaleFactor);
+        pineconeX = x + (50 - 30 * pineconeDifficulty) * scaleFactor;
+      } else if (region === 2 && gapY + gapSize <= height - 100 * scaleFactor) {
+        pineconeY = random(gapY + gapSize + 50 * scaleFactor, height - 50 * scaleFactor);
+        pineconeX = x + (150 - 30 * pineconeDifficulty) * scaleFactor;
+      } else {
+        pineconeY = random(gapY + 50 * scaleFactor, gapY + gapSize - 50 * scaleFactor);
+        pineconeX = x + (50 - 30 * pineconeDifficulty) * scaleFactor;
+      }
+      pinecones.push({ x: pineconeX, y: pineconeY });
     }
   } catch (e) {
     console.error('Error in spawnTree:', e);
