@@ -12,7 +12,7 @@
       touch-action: none;
       width: 100%;
       height: 100vh;
-      background-color: #008000; /* Fallback-Hintergrund, falls Canvas fehlschlägt */
+      background-color: #008000;
     }
     canvas {
       display: block;
@@ -172,7 +172,7 @@ function preload() {
         console.error('Failed to load ./stammoben.png, using placeholder');
         upperTreeImg = createImage(100, 100);
         upperTreeImg.loadPixels();
-        for (let i = 0; i < upperTreeImg.width * upperTreeImg.height * 4; i += 4) {
+        for (let i = 0; i < upperTreeImg.width * treeImg.height * 4; i += 4) {
           upperTreeImg.pixels[i] = 0;
           upperTreeImg.pixels[i + 1] = 128;
           upperTreeImg.pixels[i + 2] = 0;
@@ -228,7 +228,6 @@ function setup() {
     successTimer = 0;
     kPressTimes = [];
     
-    // Mische die Fragen in zufälliger Reihenfolge
     shuffledQuestions = [...quizQuestions];
     for (let i = shuffledQuestions.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
@@ -236,8 +235,7 @@ function setup() {
     }
     currentQuestionIndex = 0;
     
-    // Initiale Bäume mit Mindestabstand
-    let treeSpacing = windowWidth < 768 ? 500 : (windowWidth < windowHeight ? 400 : 300);
+    let treeSpacing = 300 * scaleFactor;
     for (let i = 0; i < 3; i++) {
       spawnTree(width + i * treeSpacing);
     }
@@ -252,7 +250,6 @@ function draw() {
     clear();
     background(0, 100, 0);
 
-    // Hintergrundbild proportional skalieren
     if (newBgImg && newBgImg.width > 0) {
       let imgAspect = newBgImg.width / newBgImg.height;
       let canvasAspect = width / height;
@@ -364,26 +361,26 @@ function draw() {
         tree.x -= 2 * scaleFactor;
 
         if (newUpperTreeImg && newUpperTreeImg.width > 0) {
-          image(newUpperTreeImg, tree.x, 0, 100 * scaleFactor, tree.gapY - 100 * scaleFactor);
+          image(newUpperTreeImg, tree.x, 0, 100 * scaleFactor, tree.gapY);
         } else if (upperTreeImg && upperTreeImg.width > 0) {
-          image(upperTreeImg, tree.x, 0, 100 * scaleFactor, tree.gapY - 100 * scaleFactor);
+          image(upperTreeImg, tree.x, 0, 100 * scaleFactor, tree.gapY);
         } else {
           fill(0, 128, 0);
-          rect(tree.x, 0, 100 * scaleFactor, tree.gapY - 100 * scaleFactor);
+          rect(tree.x, 0, 100 * scaleFactor, tree.gapY);
         }
 
         if (newTreeImg && newTreeImg.width > 0) {
-          image(newTreeImg, tree.x, tree.gapY + 150 * scaleFactor, 100 * scaleFactor, height - (tree.gapY + 150 * scaleFactor));
+          image(newTreeImg, tree.x, tree.gapY + 200 * scaleFactor, 100 * scaleFactor, height - (tree.gapY + 200 * scaleFactor));
         } else if (treeImg && treeImg.width > 0) {
-          image(treeImg, tree.x, tree.gapY + 150 * scaleFactor, 100 * scaleFactor, height - (tree.gapY + 150 * scaleFactor));
+          image(treeImg, tree.x, tree.gapY + 200 * scaleFactor, 100 * scaleFactor, height - (tree.gapY + 200 * scaleFactor));
         } else {
           fill(0, 128, 0);
-          rect(tree.x, tree.gapY + 150 * scaleFactor, 100 * scaleFactor, height - (tree.gapY + 150 * scaleFactor));
+          rect(tree.x, tree.gapY + 200 * scaleFactor, 100 * scaleFactor, height - (tree.gapY + 200 * scaleFactor));
         }
 
         if (invincibilityTimer <= 0) {
           if (birdX + 25 * scaleFactor > tree.x && birdX - 25 * scaleFactor < tree.x + 100 * scaleFactor) {
-            if (birdY - 25 * scaleFactor < tree.gapY - 100 * scaleFactor || birdY + 25 * scaleFactor > tree.gapY + 150 * scaleFactor) {
+            if (birdY - 25 * scaleFactor < tree.gapY || birdY + 25 * scaleFactor > tree.gapY + 200 * scaleFactor) {
               resetGame();
             }
           }
@@ -403,10 +400,10 @@ function draw() {
         }
       }
 
-      if (trees.length < 3 && obstaclePauseTimer <= 0) {
-        let lastTreeX = trees.length > 0 ? trees[trees.length - 1].x : -500;
-        let minTreeSpacing = windowWidth < 768 ? 500 : (windowWidth < windowHeight ? 400 : 300);
-        if (lastTreeX < width - minTreeSpacing) {
+      if (obstaclePauseTimer <= 0) {
+        let lastTreeX = trees.length > 0 ? trees[trees.length - 1].x : -300 * scaleFactor;
+        let treeSpacing = 300 * scaleFactor;
+        if (lastTreeX < width - treeSpacing) {
           spawnTree(width);
         }
       }
@@ -597,12 +594,13 @@ function draw() {
         }
       }
     } else if (gameState === 'success') {
-      fill(0);
-      rect(0, 0, width, height);
       textAlign(CENTER);
       fill(255);
       textSize(32 * scaleFactor);
+      drawingContext.shadowBlur = 10;
+      drawingContext.shadowColor = 'rgba(0, 0, 0, 0.5)';
       text("Kennwort: Baumlehrpfad", width / 2, height / 2);
+      drawingContext.shadowBlur = 0;
       
       successTimer--;
       if (successTimer <= 0) {
@@ -659,7 +657,6 @@ function draw() {
     }
   } catch (e) {
     console.error('Error in draw:', e);
-    // Fallback-Anzeige
     background(255);
     fill(255, 0, 0);
     textAlign(CENTER);
@@ -777,17 +774,14 @@ function startGame() {
 
 function spawnTree(x) {
   try {
-    let minGap = windowWidth < windowHeight ? 350 : (windowWidth < 768 ? 300 : 200);
-    let maxGap = 400;
-    let gapRange = maxGap - minGap;
-    let difficultyFactor = windowWidth < 768 ? 0 : constrain(score / 100, 0, 1);
-    let gapSize = maxGap - gapRange * difficultyFactor;
-    let gapY = windowWidth < windowHeight ? random(height / 3, 2 * height / 3) : (windowWidth < 768 ? random(height / 4, 3 * height / 4) : random(max(100, gapSize), min(height - gapSize - 100, height - 100)));
+    let gapSize = 200 * scaleFactor;
+    let minY = height * 0.25;
+    let maxY = height * 0.75 - gapSize;
+    let gapY = random(minY, maxY);
     trees.push({ x: x, gapY: gapY, passed: false });
     if (random() < 0.7) {
-      let pineconeDistance = max(50, 100 - (obstaclesPassed * 5));
-      let pineconeY = random(gapY - 50, gapY + 100);
-      pinecones.push({ x: x + pineconeDistance, y: pineconeY });
+      let pineconeY = random(gapY, gapY + gapSize);
+      pinecones.push({ x: x + 50 * scaleFactor, y: pineconeY });
     }
   } catch (e) {
     console.error('Error in spawnTree:', e);
