@@ -49,7 +49,7 @@ let restartDelayTimer = 0;
 let gravityActive = false;
 let startDelayTimer = 0;
 let confettiPlayed = false;
-let invincibilityTimer = 0; // Neue Variable für Unverwundbarkeit nach Quizantwort
+let invincibilityTimer = 0;
 
 const quizQuestions = [
   {
@@ -463,9 +463,11 @@ function draw() {
 
     rectMode(CENTER);
     let btnWidth = max(350 * scaleFactor, 250);
-    let btnHeight = max(70 * scaleFactor, 60);
+    let btnHeight = max(60 * scaleFactor, 50); // Kleinere Button-Höhe
     let maxButtonWidth = btnWidth * 0.9;
     let baseAnswerFontSize = 24 * scaleFactor;
+    // Größerer Abstand für Smartphones
+    let buttonSpacing = windowWidth < 768 ? 120 * scaleFactor : 100 * scaleFactor;
 
     let longestAnswer = quiz.options.reduce((a, b) => a.length > b.length ? a : b, '');
     textSize(baseAnswerFontSize);
@@ -478,7 +480,7 @@ function draw() {
 
     for (let i = 0; i < quiz.options.length; i++) {
       let x = width / 2;
-      let y = height / 2 + i * 80 * scaleFactor - 40 * scaleFactor;
+      let y = height / 2 - 80 * scaleFactor + i * buttonSpacing; // Nach oben verschoben
       let scale = 1;
       
       if (mouseX > x - btnWidth / 2 && mouseX < x + btnWidth / 2 && mouseY > y - btnHeight / 2 && mouseY < y + btnHeight / 2) {
@@ -651,9 +653,9 @@ function handleInput() {
   } else if (gameState === 'quiz' && quiz) {
     for (let i = 0; i < quiz.options.length; i++) {
       let x = width / 2;
-      let y = height / 2 + i * 80 * scaleFactor - 40 * scaleFactor;
+      let y = height / 2 - 80 * scaleFactor + i * (windowWidth < 768 ? 120 * scaleFactor : 100 * scaleFactor);
       let btnWidth = max(350 * scaleFactor, 250);
-      let btnHeight = max(70 * scaleFactor, 60);
+      let btnHeight = max(60 * scaleFactor, 50);
       let touchX = mouseX;
       let touchY = mouseY;
       if (touchX > x - btnWidth / 2 && touchX < x + btnWidth / 2 && touchY > y - btnHeight / 2 && touchY < y + btnHeight / 2) {
@@ -692,12 +694,12 @@ function startGame() {
 }
 
 function spawnTree(x) {
-  let minGap = 200 * scaleFactor;
+  let minGap = windowWidth < 768 ? 250 * scaleFactor : 200 * scaleFactor; // Größere Lücke auf kleinen Bildschirmen
   let maxGap = 400 * scaleFactor;
   let gapRange = maxGap - minGap;
-  let difficultyFactor = constrain(score / 50, 0, 1);
+  let difficultyFactor = constrain(score / 100, 0, 1); // Weniger Schwierigkeitssteigerung
   let gapSize = maxGap - gapRange * difficultyFactor;
-  let gapY = random(gapSize, height - gapSize - 150 * scaleFactor);
+  let gapY = random(max(100 * scaleFactor, gapSize), min(height - gapSize - 100 * scaleFactor, height - 100 * scaleFactor)); // Eingeschränkte y-Position
   trees.push({ x: x, gapY: gapY, passed: false });
   if (random() < 0.7) {
     // Dynamischer Abstand für Zapfen basierend auf obstaclesPassed
