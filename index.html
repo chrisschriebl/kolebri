@@ -313,7 +313,7 @@ function draw() {
       }
       let baseColor = color(139, 69, 19);
       let hoverColor = color(92, 46, 13);
-      let buttonColor = hoverIndex === 0 ? hoverColor : baseColor;
+      let buttonColor = hoverIndex == 0 ? hoverColor : baseColor;
       drawingContext.shadowBlur = 10;
       drawingContext.shadowColor = 'rgba(0, 0, 0, 0.3)';
       fill(buttonColor);
@@ -473,7 +473,7 @@ function draw() {
       let questionWidth = width * 0.8;
       let questionHeight = height * 0.15;
       let questionX = width / 2;
-      let questionY = height * 0.25;
+      let questionY = height * 0.2;
 
       drawingContext.shadowBlur = 10;
       drawingContext.shadowColor = 'rgba(0, 0, 0, 0.3)';
@@ -519,7 +519,7 @@ function draw() {
       let btnHeight = windowWidth < 768 ? max(50 * scaleFactor, 40) : max(70 * scaleFactor, 60);
       let maxButtonWidth = btnWidth * 0.9;
       let baseAnswerFontSize = 20 * scaleFactor;
-      let buttonSpacing = windowWidth < 768 ? 80 * scaleFactor : 80 * scaleFactor;
+      let buttonSpacing = 80 * scaleFactor;
 
       let longestAnswer = quiz.options.reduce((a, b) => a.length > b.length ? a : b, '');
       textSize(baseAnswerFontSize);
@@ -532,7 +532,7 @@ function draw() {
 
       for (let i = 0; i < quiz.options.length; i++) {
         let x = width / 2;
-        let y = height * 0.35 + i * buttonSpacing;
+        let y = height * 0.4 + i * buttonSpacing;
         let scale = 1;
         
         if (mouseX > x - btnWidth / 2 && mouseX < x + btnWidth / 2 && mouseY > y - btnHeight / 2 && mouseY < y + btnHeight / 2) {
@@ -559,32 +559,29 @@ function draw() {
         drawingContext.shadowBlur = 0;
       }
 
-      let timerRadius = 25 * scaleFactor;
-      let timerY = height * 0.35 + 1.5 * buttonSpacing;
+      let timerRadius = 30 * scaleFactor;
+      let timerX = width * 0.85;
+      let timerY = height * 0.4 + 1.5 * buttonSpacing;
       let timerProgress = quizTimer / (15 * 60);
-      let timerPositions = [{x: width * 0.1}, {x: width * 0.9}];
 
-      for (let pos of timerPositions) {
-        let timerX = pos.x;
-        drawingContext.shadowBlur = 5;
-        drawingContext.shadowColor = 'rgba(0, 0, 0, 0.3)';
-        fill(100);
-        ellipse(timerX, timerY, timerRadius * 2);
-        let innerRadius = timerRadius * timerProgress;
-        let gradient = drawingContext.createLinearGradient(timerX - innerRadius, timerY, timerX + innerRadius, timerY);
-        gradient.addColorStop(0, color(255, 99, 71));
-        gradient.addColorStop(1, color(255, 215, 0));
-        drawingContext.fillStyle = gradient;
-        ellipse(timerX, timerY, innerRadius * 2);
-        drawingContext.shadowBlur = 0;
+      drawingContext.shadowBlur = 5;
+      drawingContext.shadowColor = 'rgba(0, 0, 0, 0.3)';
+      fill(100);
+      ellipse(timerX, timerY, timerRadius * 2);
+      let innerRadius = timerRadius * timerProgress;
+      let gradient = drawingContext.createLinearGradient(timerX - innerRadius, timerY, timerX + innerRadius, timerY);
+      gradient.addColorStop(0, color(255, 99, 71));
+      gradient.addColorStop(1, color(255, 215, 0));
+      drawingContext.fillStyle = gradient;
+      ellipse(timerX, timerY, innerRadius * 2);
+      drawingContext.shadowBlur = 0;
 
-        drawingContext.shadowBlur = 3;
-        drawingContext.shadowColor = 'rgba(0, 0, 0, 0.5)';
-        fill(255, 255 * quizFade);
-        textSize(18 * scaleFactor);
-        text(ceil(quizTimer / 60), timerX, timerY + 6 * scaleFactor);
-        drawingContext.shadowBlur = 0;
-      }
+      drawingContext.shadowBlur = 3;
+      drawingContext.shadowColor = 'rgba(0, 0, 0, 0.5)';
+      fill(255, 255 * quizFade);
+      textSize(20 * scaleFactor);
+      text(ceil(quizTimer / 60), timerX, timerY + 7 * scaleFactor);
+      drawingContext.shadowBlur = 0;
 
       quizTimer--;
       if (quizTimer <= 0) {
@@ -603,9 +600,9 @@ function draw() {
 
       quizResultTimer--;
       if (quizResultTimer <= 0) {
-        if (correctAnswers >= 15) {
-          gameState = 'success';
-          successTimer = 300;
+        if (totalQuestionsAnswered >= 15) {
+          gameState = 'gameover';
+          restartDelayTimer = 300;
         } else {
           gameState = 'playing';
           quiz = null;
@@ -742,7 +739,7 @@ function handleInput() {
     } else if (gameState === 'quiz' && quiz && quizAnswerDelay <= 0) {
       for (let i = 0; i < quiz.options.length; i++) {
         let x = width / 2;
-        let y = height * 0.35 + i * (windowWidth < 768 ? 80 * scaleFactor : 80 * scaleFactor);
+        let y = height * 0.4 + i * 80 * scaleFactor;
         let btnWidth = windowWidth < 768 ? max(300 * scaleFactor, 200) : max(350 * scaleFactor, 250);
         let btnHeight = windowWidth < 768 ? max(50 * scaleFactor, 40) : max(70 * scaleFactor, 60);
         let touchX = mouseX;
@@ -821,7 +818,8 @@ function startQuiz() {
       quizAnswerDelay = 120;
       console.log('Quiz started:', quiz.question, 'Options:', quiz.options);
     } else {
-      resetGame();
+      gameState = 'gameover';
+      restartDelayTimer = 300;
     }
   } catch (e) {
     console.error('Error in startQuiz:', e);
