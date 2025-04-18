@@ -413,9 +413,6 @@ function draw() {
       quizFade = min(quizFade + 0.02, 1);
     }
 
-    fill(0, 0, 0, 200 * quizFade);
-    rect(0, 0, width, height);
-
     let questionWidth = width * 0.8;
     let questionHeight = height * 0.15;
     let questionX = width / 2;
@@ -553,14 +550,11 @@ function draw() {
       }
     }
   } else if (gameState === 'gameover') {
-    drawingContext.shadowBlur = 0;
-    fill(0, 200);
-    rect(0, 0, width, height);
+    textAlign(CENTER);
+    textSize(32 * scaleFactor);
     drawingContext.shadowBlur = 5;
     drawingContext.shadowColor = 'rgba(0, 0, 0, 0.5)';
     fill(255);
-    textSize(32 * scaleFactor);
-    textAlign(CENTER);
     text(`Punkte: ${score}`, width / 2, height / 2 - 40 * scaleFactor);
     text(`Richtige Fragen: ${correctAnswers}/15`, width / 2, height / 2);
     if (restartDelayTimer <= 0) {
@@ -696,10 +690,12 @@ function spawnTree(x) {
   let gapSize = maxGap - gapRange * difficultyFactor;
   let gapY = random(gapSize, height - gapSize - 150 * scaleFactor);
   trees.push({ x: x, gapY: gapY, passed: false });
-  if (random() < 0.5) {
+  if (random() < 0.7) {
     // Dynamischer Abstand für Zapfen basierend auf obstaclesPassed
-    let pineconeDistance = max(50 * scaleFactor, 150 * scaleFactor - (obstaclesPassed * 5 * scaleFactor));
-    pinecones.push({ x: x + pineconeDistance, y: gapY + 25 * scaleFactor });
+    let pineconeDistance = max(50 * scaleFactor, 100 * scaleFactor - (obstaclesPassed * 5 * scaleFactor));
+    // Zufällige vertikale Position innerhalb der Lücke
+    let pineconeY = random(gapY - 50 * scaleFactor, gapY + 100 * scaleFactor);
+    pinecones.push({ x: x + pineconeDistance, y: pineconeY });
   }
 }
 
