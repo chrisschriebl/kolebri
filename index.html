@@ -259,9 +259,6 @@ function draw() {
   }
 
   if (gameState === 'start') {
-    fill(0, 0, 0, 200);
-    rect(0, 0, width, height, 15);
-
     textAlign(CENTER);
     drawingContext.shadowBlur = 10;
     drawingContext.shadowColor = 'rgba(255, 255, 255, 0.5)';
@@ -296,7 +293,7 @@ function draw() {
     text("Spiel Starten", btnX, btnY + 7 * scaleFactor);
     drawingContext.shadowBlur = 0;
 
-    // Hinweis für Leertaste hinzufügen
+    // Hinweis für Leertaste
     drawingContext.shadowBlur = 5;
     drawingContext.shadowColor = 'rgba(0, 0, 0, 0.5)';
     fill(255);
@@ -700,7 +697,9 @@ function spawnTree(x) {
   let gapY = random(gapSize, height - gapSize - 150 * scaleFactor);
   trees.push({ x: x, gapY: gapY, passed: false });
   if (random() < 0.5) {
-    pinecones.push({ x: x + 150 * scaleFactor, y: gapY + 25 * scaleFactor });
+    // Dynamischer Abstand für Zapfen basierend auf obstaclesPassed
+    let pineconeDistance = max(50 * scaleFactor, 150 * scaleFactor - (obstaclesPassed * 5 * scaleFactor));
+    pinecones.push({ x: x + pineconeDistance, y: gapY + 25 * scaleFactor });
   }
 }
 
