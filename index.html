@@ -12,6 +12,7 @@
       touch-action: none;
       width: 100%;
       height: 100vh;
+      background-color: #008000; /* Fallback-Hintergrund, falls Canvas fehlschlägt */
     }
     canvas {
       display: block;
@@ -133,15 +134,19 @@ const quizQuestions = [
 
 function preload() {
   try {
-    // Lade die Bilder mit relativen Pfaden, mit Fallback auf Platzhalterbilder
     newBgImg = loadImage('./background.jpg', 
       () => console.log('New Background loaded successfully'), 
       () => {
         console.error('Failed to load ./background.jpg, using placeholder');
-        bgImg = loadImage('https://images.pexels.com/photos/38136/pexels-photo-38136.jpeg', 
-          () => console.log('Background placeholder loaded successfully'), 
-          () => console.error('Failed to load background placeholder image')
-        );
+        bgImg = createImage(800, 600);
+        bgImg.loadPixels();
+        for (let i = 0; i < bgImg.width * bgImg.height * 4; i += 4) {
+          bgImg.pixels[i] = 0;
+          bgImg.pixels[i + 1] = 100;
+          bgImg.pixels[i + 2] = 0;
+          bgImg.pixels[i + 3] = 255;
+        }
+        bgImg.updatePixels();
       }
     );
 
@@ -149,10 +154,15 @@ function preload() {
       () => console.log('New Lower Obstacle loaded successfully'), 
       () => {
         console.error('Failed to load ./stammunten.png, using placeholder');
-        treeImg = loadImage('https://images.pexels.com/photos/1612351/pexels-photo-1612351.jpeg', 
-          () => console.log('Lower Obstacle placeholder loaded successfully'), 
-          () => console.error('Failed to load lower obstacle placeholder image')
-        );
+        treeImg = createImage(100, 100);
+        treeImg.loadPixels();
+        for (let i = 0; i < treeImg.width * treeImg.height * 4; i += 4) {
+          treeImg.pixels[i] = 0;
+          treeImg.pixels[i + 1] = 128;
+          treeImg.pixels[i + 2] = 0;
+          treeImg.pixels[i + 3] = 255;
+        }
+        treeImg.updatePixels();
       }
     );
 
@@ -160,10 +170,15 @@ function preload() {
       () => console.log('New Upper Obstacle loaded successfully'), 
       () => {
         console.error('Failed to load ./stammoben.png, using placeholder');
-        upperTreeImg = loadImage('https://images.pexels.com/photos/164353/pexels-photo-164353.jpeg', 
-          () => console.log('Upper Obstacle placeholder loaded successfully'), 
-          () => console.error('Failed to load upper obstacle placeholder image')
-        );
+        upperTreeImg = createImage(100, 100);
+        upperTreeImg.loadPixels();
+        for (let i = 0; i < upperTreeImg.width * upperTreeImg.height * 4; i += 4) {
+          upperTreeImg.pixels[i] = 0;
+          upperTreeImg.pixels[i + 1] = 128;
+          upperTreeImg.pixels[i + 2] = 0;
+          upperTreeImg.pixels[i + 3] = 255;
+        }
+        upperTreeImg.updatePixels();
       }
     );
 
@@ -171,10 +186,15 @@ function preload() {
       () => console.log('New Zapfen loaded successfully'), 
       () => {
         console.error('Failed to load ./zapfen.png, using placeholder');
-        pineconeImg = loadImage('https://images.pexels.com/photos/380284/pexels-photo-380284.jpeg', 
-          () => console.log('Zapfen placeholder loaded successfully'), 
-          () => console.error('Failed to load zapfen placeholder image')
-        );
+        pineconeImg = createImage(30, 30);
+        pineconeImg.loadPixels();
+        for (let i = 0; i < pineconeImg.width * pineconeImg.height * 4; i += 4) {
+          pineconeImg.pixels[i] = 139;
+          pineconeImg.pixels[i + 1] = 69;
+          pineconeImg.pixels[i + 2] = 19;
+          pineconeImg.pixels[i + 3] = 255;
+        }
+        pineconeImg.updatePixels();
       }
     );
   } catch (e) {
@@ -183,707 +203,634 @@ function preload() {
 }
 
 function setup() {
-  createCanvas(windowWidth, windowHeight);
-  scaleFactor = min(windowWidth / 800, windowHeight / 600);
-  birdX = width / 4;
-  birdY = height / 2;
-  birdVelocity = 0;
-  gravity = 0.5 * scaleFactor;
-  trees = [];
-  pinecones = [];
-  score = 0;
-  obstaclesPassed = 0;
-  gameState = 'start';
-  correctAnswers = 0;
-  totalQuestionsAnswered = 0;
-  quizResultMessage = '';
-  quizResultTimer = 0;
-  obstaclePauseTimer = 0;
-  restartDelayTimer = 0;
-  gravityActive = false;
-  startDelayTimer = 0;
-  confettiPlayed = false;
-  invincibilityTimer = 0;
-  successTimer = 0;
-  kPressTimes = [];
-  
-  // Mische die Fragen in zufälliger Reihenfolge
-  shuffledQuestions = [...quizQuestions];
-  for (let i = shuffledQuestions.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [shuffledQuestions[i], shuffledQuestions[j]] = [shuffledQuestions[j], shuffledQuestions[i]];
+  try {
+    createCanvas(windowWidth, windowHeight);
+    scaleFactor = min(windowWidth / 800, windowHeight / 600);
+    birdX = width / 4;
+    birdY = height / 2;
+    birdVelocity = 0;
+    gravity = 0.5 * scaleFactor;
+    trees = [];
+    pinecones = [];
+    score = 0;
+    obstaclesPassed = 0;
+    gameState = 'start';
+    correctAnswers = 0;
+    totalQuestionsAnswered = 0;
+    quizResultMessage = '';
+    quizResultTimer = 0;
+    obstaclePauseTimer = 0;
+    restartDelayTimer = 0;
+    gravityActive = false;
+    startDelayTimer = 0;
+    confettiPlayed = false;
+    invincibilityTimer = 0;
+    successTimer = 0;
+    kPressTimes = [];
+    
+    // Mische die Fragen in zufälliger Reihenfolge
+    shuffledQuestions = [...quizQuestions];
+    for (let i = shuffledQuestions.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffledQuestions[i], shuffledQuestions[j]] = [shuffledQuestions[j], shuffledQuestions[i]];
+    }
+    currentQuestionIndex = 0;
+    
+    // Initiale Bäume mit Mindestabstand
+    let treeSpacing = windowWidth < 768 ? 500 : (windowWidth < windowHeight ? 400 : 300);
+    for (let i = 0; i < 3; i++) {
+      spawnTree(width + i * treeSpacing);
+    }
+    textFont('Montserrat');
+  } catch (e) {
+    console.error('Error in setup:', e);
   }
-  currentQuestionIndex = 0;
-  
-  // Größerer Abstand zwischen Bäumen
-  let treeSpacing = windowWidth < 768 ? 500 * scaleFactor : (windowWidth < windowHeight ? 400 * scaleFactor : 300 * scaleFactor);
-  for (let i = 0; i < 3; i++) {
-    spawnTree(width + i * treeSpacing);
-  }
-  textFont('Montserrat');
 }
 
 function draw() {
-  clear();
-  background(0, 100, 0);
+  try {
+    clear();
+    background(0, 100, 0);
 
-  // Hintergrundbild proportional skalieren (Cover-Methode)
-  if (newBgImg && newBgImg.width > 0) {
-    let imgAspect = newBgImg.width / newBgImg.height;
-    let canvasAspect = width / height;
-    let imgWidth, imgHeight, imgX, imgY;
+    // Hintergrundbild proportional skalieren
+    if (newBgImg && newBgImg.width > 0) {
+      let imgAspect = newBgImg.width / newBgImg.height;
+      let canvasAspect = width / height;
+      let imgWidth, imgHeight, imgX, imgY;
 
-    if (imgAspect > canvasAspect) {
-      imgHeight = height;
-      imgWidth = height * imgAspect;
-      imgX = (width - imgWidth) / 2;
-      imgY = 0;
-    } else {
-      imgWidth = width;
-      imgHeight = width / imgAspect;
-      imgX = 0;
-      imgY = (height - imgHeight) / 2;
-    }
-    image(newBgImg, imgX, imgY, imgWidth, imgHeight);
-  } else if (bgImg) {
-    let imgAspect = bgImg.width / bgImg.height;
-    let canvasAspect = width / height;
-    let imgWidth, imgHeight, imgX, imgY;
-
-    if (imgAspect > canvasAspect) {
-      imgHeight = height;
-      imgWidth = height * imgAspect;
-      imgX = (width - imgWidth) / 2;
-      imgY = 0;
-    } else {
-      imgWidth = width;
-      imgHeight = width / imgAspect;
-      imgX = 0;
-      imgY = (height - imgHeight) / 2;
-    }
-    image(bgImg, imgX, imgY, imgWidth, imgHeight);
-  }
-
-  if (gameState === 'start') {
-    textAlign(CENTER);
-    drawingContext.shadowBlur = 10;
-    drawingContext.shadowColor = 'rgba(255, 255, 255, 0.5)';
-    fill(255);
-    textSize(48 * scaleFactor);
-    text("Kolebri - The Game", width / 2, height / 3);
-    drawingContext.shadowBlur = 0;
-
-    let btnWidth = max(200 * scaleFactor, 200);
-    let btnHeight = max(60 * scaleFactor, 60);
-    let btnX = width / 2;
-    let btnY = height / 2 + 50 * scaleFactor;
-    hoverIndex = -1;
-    if (mouseX > btnX - btnWidth / 2 && mouseX < btnX + btnWidth / 2 &&
-        mouseY > btnY - btnHeight / 2 && mouseY < btnY + btnHeight / 2) {
-      hoverIndex = 0;
-    }
-    let baseColor = color(139, 69, 19);
-    let hoverColor = color(92, 46, 13);
-    let buttonColor = hoverIndex === 0 ? hoverColor : baseColor;
-    drawingContext.shadowBlur = 10;
-    drawingContext.shadowColor = 'rgba(0, 0, 0, 0.3)';
-    fill(buttonColor);
-    noStroke();
-    rectMode(CENTER);
-    rect(btnX, btnY, btnWidth, btnHeight, 15);
-    drawingContext.shadowBlur = 0;
-    drawingContext.shadowBlur = 5;
-    drawingContext.shadowColor = 'rgba(0, 0, 0, 0.5)';
-    fill(255);
-    textSize(24 * scaleFactor);
-    text("Spiel Starten", btnX, btnY + 7 * scaleFactor);
-    drawingContext.shadowBlur = 0;
-
-    // Hinweis für Leertaste und Querformat
-    drawingContext.shadowBlur = 5;
-    drawingContext.shadowColor = 'rgba(0, 0, 0, 0.5)';
-    fill(255);
-    textSize(20 * scaleFactor);
-    text("oder Leertaste drücken", width / 2, btnY + btnHeight / 2 + 30 * scaleFactor);
-    text("Bitte im Querformat spielen", width / 2, btnY + btnHeight / 2 + 50 * scaleFactor);
-    drawingContext.shadowBlur = 0;
-  } else if (gameState === 'playing') {
-    if (startDelayTimer > 0) {
-      startDelayTimer--;
-      if (startDelayTimer <= 0) {
-        gravityActive = true;
-      }
-    }
-
-    if (gravityActive) {
-      birdVelocity += gravity;
-      birdY += birdVelocity;
-    }
-
-    if (newBird && newBird.width > 0) {
-      image(newBird, birdX - 25 * scaleFactor, birdY - 25 * scaleFactor, 50 * scaleFactor, 50 * scaleFactor);
-    } else if (bird && bird.width > 0) {
-      image(bird, birdX - 25 * scaleFactor, birdY - 25 * scaleFactor, 50 * scaleFactor, 50 * scaleFactor);
-    } else {
-      fill(255, 0, 0);
-      rect(birdX - 25 * scaleFactor, birdY - 25 * scaleFactor, 50 * scaleFactor, 50 * scaleFactor);
-    }
-
-    // Kollisionsprüfung nur, wenn kein Unverwundbarkeitstimer aktiv ist
-    if (invincibilityTimer <= 0) {
-      if (birdY > height || birdY < 0) {
-        resetGame();
-      }
-    }
-
-    for (let i = trees.length - 1; i >= 0; i--) {
-      let tree = trees[i];
-      tree.x -= 2 * scaleFactor;
-
-      // Zeichne das obere Hindernis mit Fallback
-      if (newUpperTreeImg && newUpperTreeImg.width > 0) {
-        image(newUpperTreeImg, tree.x, 0, 100 * scaleFactor, tree.gapY - 100 * scaleFactor);
-      } else if (upperTreeImg && upperTreeImg.width > 0) {
-        image(upperTreeImg, tree.x, 0, 100 * scaleFactor, tree.gapY - 100 * scaleFactor);
-      } else if (newTreeImg && newTreeImg.width > 0) {
-        image(newTreeImg, tree.x, 0, 100 * scaleFactor, tree.gapY - 100 * scaleFactor);
-      } else if (treeImg && treeImg.width > 0) {
-        image(treeImg, tree.x, 0, 100 * scaleFactor, tree.gapY - 100 * scaleFactor);
+      if (imgAspect > canvasAspect) {
+        imgHeight = height;
+        imgWidth = height * imgAspect;
+        imgX = (width - imgWidth) / 2;
+        imgY = 0;
       } else {
-        fill(0, 128, 0);
-        rect(tree.x, 0, 100 * scaleFactor, tree.gapY - 100 * scaleFactor);
+        imgWidth = width;
+        imgHeight = width / imgAspect;
+        imgX = 0;
+        imgY = (height - imgHeight) / 2;
       }
+      image(newBgImg, imgX, imgY, imgWidth, imgHeight);
+    } else if (bgImg && bgImg.width > 0) {
+      let imgAspect = bgImg.width / bgImg.height;
+      let canvasAspect = width / height;
+      let imgWidth, imgHeight, imgX, imgY;
 
-      // Zeichne das untere Hindernis mit Fallback
-      if (newTreeImg && newTreeImg.width > 0) {
-        image(newTreeImg, tree.x, tree.gapY + 150 * scaleFactor, 100 * scaleFactor, height - (tree.gapY + 150 * scaleFactor));
-      } else if (treeImg && treeImg.width > 0) {
-        image(treeImg, tree.x, tree.gapY + 150 * scaleFactor, 100 * scaleFactor, height - (tree.gapY + 150 * scaleFactor));
+      if (imgAspect > canvasAspect) {
+        imgHeight = height;
+        imgWidth = height * imgAspect;
+        imgX = (width - imgWidth) / 2;
+        imgY = 0;
       } else {
-        fill(0, 128, 0);
-        rect(tree.x, tree.gapY + 150 * scaleFactor, 100 * scaleFactor, height - (tree.gapY + 150 * scaleFactor));
+        imgWidth = width;
+        imgHeight = width / imgAspect;
+        imgX = 0;
+        imgY = (height - imgHeight) / 2;
       }
-
-      // Kollisionsprüfung nur, wenn kein Unverwundbarkeitstimer aktiv ist
-      if (invincibilityTimer <= 0) {
-        if (birdX + 25 * scaleFactor > tree.x && birdX - 25 * scaleFactor < tree.x + 100 * scaleFactor) {
-          if (birdY - 25 * scaleFactor < tree.gapY - 100 * scaleFactor || birdY + 25 * scaleFactor > tree.gapY + 150 * scaleFactor) {
-            resetGame();
-          }
-        }
-      }
-
-      if (!tree.passed && birdX > tree.x + 100 * scaleFactor) {
-        score += 1;
-        tree.passed = true;
-        obstaclesPassed += 1;
-        if (obstaclesPassed % 3 === 0) {
-          startQuiz();
-        }
-      }
-
-      if (tree.x < -100 * scaleFactor) {
-        trees.splice(i, 1);
-      }
+      image(bgImg, imgX, imgY, imgWidth, imgHeight);
     }
 
-    // Neuer Baum nur spawnen, wenn der letzte Baum weit genug entfernt ist
-    if (trees.length < 3 && obstaclePauseTimer <= 0) {
-      let lastTreeX = trees.length > 0 ? trees[trees.length - 1].x : -500 * scaleFactor;
-      let minTreeSpacing = windowWidth < 768 ? 500 * scaleFactor : (windowWidth < windowHeight ? 400 * scaleFactor : 300 * scaleFactor);
-      if (lastTreeX < width - minTreeSpacing) {
-        spawnTree(width);
+    if (gameState === 'start') {
+      textAlign(CENTER);
+      drawingContext.shadowBlur = 10;
+      drawingContext.shadowColor = 'rgba(255, 255, 255, 0.5)';
+      fill(255);
+      textSize(48 * scaleFactor);
+      text("Kolebri - The Game", width / 2, height / 3);
+      drawingContext.shadowBlur = 0;
+
+      let btnWidth = max(200 * scaleFactor, 200);
+      let btnHeight = max(60 * scaleFactor, 60);
+      let btnX = width / 2;
+      let btnY = height / 2 + 50 * scaleFactor;
+      hoverIndex = -1;
+      if (mouseX > btnX - btnWidth / 2 && mouseX < btnX + btnWidth / 2 &&
+          mouseY > btnY - btnHeight / 2 && mouseY < btnY + btnHeight / 2) {
+        hoverIndex = 0;
       }
-    }
-
-    for (let i = pinecones.length - 1; i >= 0; i--) {
-      let pinecone = pinecones[i];
-      pinecone.x -= 2 * scaleFactor;
-      if (newPineconeImg && newPineconeImg.width > 0) {
-        image(newPineconeImg, pinecone.x, pinecone.y, 30 * scaleFactor, 30 * scaleFactor);
-      } else if (pineconeImg) {
-        image(pineconeImg, pinecone.x, pinecone.y, 30 * scaleFactor, 30 * scaleFactor);
-      }
-
-      if (birdX + 25 * scaleFactor > pinecone.x && birdX - 25 * scaleFactor < pinecone.x + 30 * scaleFactor &&
-          birdY + 25 * scaleFactor > pinecone.y && birdY - 25 * scaleFactor < pinecone.y + 30 * scaleFactor) {
-        score += 5;
-        pinecones.splice(i, 1);
-      }
-
-      if (pinecone.x < -30 * scaleFactor) {
-        pinecones.splice(i, 1);
-      }
-    }
-
-    if (obstaclePauseTimer > 0) {
-      obstaclePauseTimer--;
-    }
-
-    // Unverwundbarkeitstimer dekrementieren
-    if (invincibilityTimer > 0) {
-      invincibilityTimer--;
-    }
-
-    drawingContext.shadowBlur = 5;
-    drawingContext.shadowColor = 'rgba(0, 0, 0, 0.5)';
-    fill(255);
-    textSize(32 * scaleFactor);
-    text(`Punkte: ${score}`, width - 150 * scaleFactor, 40 * scaleFactor);
-    drawingContext.shadowBlur = 0;
-  } else if (gameState === 'quiz' && quiz) {
-    if (quizFade < 1) {
-      quizFade = min(quizFade + 0.02, 1);
-    }
-
-    let questionWidth = width * 0.8;
-    let questionHeight = height * 0.15;
-    let questionX = width / 2;
-    let questionY = height / 4;
-
-    drawingContext.shadowBlur = 10;
-    drawingContext.shadowColor = 'rgba(0, 0, 0, 0.3)';
-    fill(255, 255 * quizFade);
-    rectMode(CENTER);
-    rect(questionX, questionY, questionWidth, questionHeight, 15);
-    drawingContext.shadowBlur = 0;
-
-    textAlign(CENTER);
-    // Anzeige der Fragenummer
-    drawingContext.shadowBlur = 5;
-    drawingContext.shadowColor = 'rgba(0, 0, 0, 0.5)';
-    fill(255);
-    textSize(20 * scaleFactor);
-    text(`Frage ${currentQuestionIndex}/15`, questionX, questionY - 20 * scaleFactor);
-    drawingContext.shadowBlur = 0;
-
-    let questionText = quiz && quiz.question ? quiz.question : 'Fehler: Frage nicht verfügbar';
-    let baseFontSize = 28 * scaleFactor;
-    textSize(baseFontSize);
-    let textWidthValue = textWidth(questionText);
-    let maxWidth = questionWidth * 0.9;
-    let fontSize = baseFontSize;
-    if (textWidthValue > maxWidth) {
-      fontSize = baseFontSize * (maxWidth / textWidthValue);
-      fontSize = max(fontSize, 16 * scaleFactor);
-    }
-    textSize(fontSize);
-    drawingContext.shadowBlur = 5;
-    drawingContext.shadowColor = 'rgba(0, 0, 0, 0.5)';
-    fill(0);
-    text(questionText, questionX, questionY + 10 * scaleFactor);
-    drawingContext.shadowBlur = 0;
-
-    const buttonColors = [
-      [color(255, 99, 71), color(255, 140, 0)],
-      [color(50, 205, 50), color(0, 255, 127)],
-      [color(30, 144, 255), color(0, 191, 255)],
-      [color(255, 215, 0), color(255, 165, 0)]
-    ];
-
-    rectMode(CENTER);
-    let btnWidth = max(350 * scaleFactor, 250);
-    let btnHeight = windowWidth < 768 ? max(60 * scaleFactor, 50) : max(70 * scaleFactor, 60);
-    let maxButtonWidth = btnWidth * 0.9;
-    let baseAnswerFontSize = 24 * scaleFactor;
-    let buttonSpacing = windowWidth < 768 ? 100 * scaleFactor : 80 * scaleFactor;
-
-    let longestAnswer = quiz.options.reduce((a, b) => a.length > b.length ? a : b, '');
-    textSize(baseAnswerFontSize);
-    let longestAnswerWidth = textWidth(longestAnswer);
-    let answerFontSize = baseAnswerFontSize;
-    if (longestAnswerWidth > maxButtonWidth) {
-      answerFontSize = baseAnswerFontSize * (maxButtonWidth / longestAnswerWidth);
-      answerFontSize = max(answerFontSize, 14 * scaleFactor);
-    }
-
-    for (let i = 0; i < quiz.options.length; i++) {
-      let x = width / 2;
-      let y = windowWidth < 768 ? (height / 2 - 80 * scaleFactor + i * buttonSpacing) : (height / 2 + i * buttonSpacing - 40 * scaleFactor);
-      let scale = 1;
-      
-      if (mouseX > x - btnWidth / 2 && mouseX < x + btnWidth / 2 && mouseY > y - btnHeight / 2 && mouseY < y + btnHeight / 2) {
-        hoverIndex = i;
-        scale = 1.1;
-      } else if (hoverIndex === i) {
-        hoverIndex = -1;
-      }
-
+      let baseColor = color(139, 69, 19);
+      let hoverColor = color(92, 46, 13);
+      let buttonColor = hoverIndex === 0 ? hoverColor : baseColor;
       drawingContext.shadowBlur = 10;
       drawingContext.shadowColor = 'rgba(0, 0, 0, 0.3)';
-      let gradient = drawingContext.createLinearGradient(x - btnWidth / 2, y, x + btnWidth / 2, y);
-      gradient.addColorStop(0, buttonColors[i][0]);
-      gradient.addColorStop(1, buttonColors[i][1]);
-      drawingContext.fillStyle = gradient;
-      rect(x, y, btnWidth * scale, btnHeight * scale, 15);
+      fill(buttonColor);
+      noStroke();
+      rectMode(CENTER);
+      rect(btnX, btnY, btnWidth, btnHeight, 15);
+      drawingContext.shadowBlur = 0;
+      drawingContext.shadowBlur = 5;
+      drawingContext.shadowColor = 'rgba(0, 0, 0, 0.5)';
+      fill(255);
+      textSize(24 * scaleFactor);
+      text("Spiel Starten", btnX, btnY + 7 * scaleFactor);
       drawingContext.shadowBlur = 0;
 
       drawingContext.shadowBlur = 5;
       drawingContext.shadowColor = 'rgba(0, 0, 0, 0.5)';
-      fill(255, 255 * quizFade);
-      textSize(answerFontSize);
-      text(quiz.options[i], x, y + 8 * scaleFactor);
+      fill(255);
+      textSize(20 * scaleFactor);
+      text("oder Leertaste drücken", width / 2, btnY + btnHeight / 2 + 30 * scaleFactor);
+      text("Bitte im Querformat spielen", width / 2, btnY + btnHeight / 2 + 50 * scaleFactor);
       drawingContext.shadowBlur = 0;
-    }
+    } else if (gameState === 'playing') {
+      if (startDelayTimer > 0) {
+        startDelayTimer--;
+        if (startDelayTimer <= 0) {
+          gravityActive = true;
+        }
+      }
 
-    let barWidth = max(300 * scaleFactor, 200);
-    let barHeight = max(20 * scaleFactor, 15);
-    let barX = width / 2;
-    let barY = height - 60 * scaleFactor;
-    let timerProgress = quizTimer / (15 * 60);
-    let filledWidth = barWidth * timerProgress;
+      if (gravityActive) {
+        birdVelocity += gravity;
+        birdY += birdVelocity;
+      }
 
-    drawingContext.shadowBlur = 5;
-    drawingContext.shadowColor = 'rgba(0, 0, 0, 0.3)';
-    fill(100);
-    rect(barX, barY, barWidth, barHeight, 10);
-    let gradient = drawingContext.createLinearGradient(barX - barWidth / 2, barY, barX + barWidth / 2, barY);
-    gradient.addColorStop(0, color(255, 99, 71));
-    gradient.addColorStop(1, color(255, 215, 0));
-    drawingContext.fillStyle = gradient;
-    rectMode(CORNER);
-    rect(barX - barWidth / 2, barY - barHeight / 2, filledWidth, barHeight, 10);
-    rectMode(CENTER);
-    drawingContext.shadowBlur = 0;
-
-    drawingContext.shadowBlur = 3;
-    drawingContext.shadowColor = 'rgba(0, 0, 0, 0.5)';
-    fill(255, 255 * quizFade);
-    textSize(16 * scaleFactor);
-    text(ceil(quizTimer / 60), barX, barY + 5 * scaleFactor);
-    drawingContext.shadowBlur = 0;
-
-    quizTimer--;
-    if (quizTimer <= 0) {
-      gameState = 'playing';
-      quiz = null;
-      obstaclePauseTimer = 120;
-    }
-  } else if (gameState === 'quizResult') {
-    textAlign(CENTER);
-    textSize(48 * scaleFactor);
-    drawingContext.shadowBlur = 10;
-    drawingContext.shadowColor = 'rgba(0, 0, 0, 0.5)';
-    fill(quizResultMessage === 'Richtig!' ? color(0, 255, 0) : color(255, 0, 0));
-    text(quizResultMessage, width / 2, height / 2);
-    drawingContext.shadowBlur = 0;
-
-    quizResultTimer--;
-    if (quizResultTimer <= 0) {
-      if (correctAnswers >= 15) {
-        gameState = 'success';
-        successTimer = 300; // 5 Sekunden
+      if (newBird && newBird.width > 0) {
+        image(newBird, birdX - 25 * scaleFactor, birdY - 25 * scaleFactor, 50 * scaleFactor, 50 * scaleFactor);
+      } else if (bird && bird.width > 0) {
+        image(bird, birdX - 25 * scaleFactor, birdY - 25 * scaleFactor, 50 * scaleFactor, 50 * scaleFactor);
       } else {
+        fill(255, 0, 0);
+        rect(birdX - 25 * scaleFactor, birdY - 25 * scaleFactor, 50 * scaleFactor, 50 * scaleFactor);
+      }
+
+      if (invincibilityTimer <= 0) {
+        if (birdY > height || birdY < 0) {
+          resetGame();
+        }
+      }
+
+      for (let i = trees.length - 1; i >= 0; i--) {
+        let tree = trees[i];
+        tree.x -= 2 * scaleFactor;
+
+        if (newUpperTreeImg && newUpperTreeImg.width > 0) {
+          image(newUpperTreeImg, tree.x, 0, 100 * scaleFactor, tree.gapY - 100 * scaleFactor);
+        } else if (upperTreeImg && upperTreeImg.width > 0) {
+          image(upperTreeImg, tree.x, 0, 100 * scaleFactor, tree.gapY - 100 * scaleFactor);
+        } else {
+          fill(0, 128, 0);
+          rect(tree.x, 0, 100 * scaleFactor, tree.gapY - 100 * scaleFactor);
+        }
+
+        if (newTreeImg && newTreeImg.width > 0) {
+          image(newTreeImg, tree.x, tree.gapY + 150 * scaleFactor, 100 * scaleFactor, height - (tree.gapY + 150 * scaleFactor));
+        } else if (treeImg && treeImg.width > 0) {
+          image(treeImg, tree.x, tree.gapY + 150 * scaleFactor, 100 * scaleFactor, height - (tree.gapY + 150 * scaleFactor));
+        } else {
+          fill(0, 128, 0);
+          rect(tree.x, tree.gapY + 150 * scaleFactor, 100 * scaleFactor, height - (tree.gapY + 150 * scaleFactor));
+        }
+
+        if (invincibilityTimer <= 0) {
+          if (birdX + 25 * scaleFactor > tree.x && birdX - 25 * scaleFactor < tree.x + 100 * scaleFactor) {
+            if (birdY - 25 * scaleFactor < tree.gapY - 100 * scaleFactor || birdY + 25 * scaleFactor > tree.gapY + 150 * scaleFactor) {
+              resetGame();
+            }
+          }
+        }
+
+        if (!tree.passed && birdX > tree.x + 100 * scaleFactor) {
+          score += 1;
+          tree.passed = true;
+          obstaclesPassed += 1;
+          if (obstaclesPassed % 3 === 0) {
+            startQuiz();
+          }
+        }
+
+        if (tree.x < -100 * scaleFactor) {
+          trees.splice(i, 1);
+        }
+      }
+
+      if (trees.length < 3 && obstaclePauseTimer <= 0) {
+        let lastTreeX = trees.length > 0 ? trees[trees.length - 1].x : -500;
+        let minTreeSpacing = windowWidth < 768 ? 500 : (windowWidth < windowHeight ? 400 : 300);
+        if (lastTreeX < width - minTreeSpacing) {
+          spawnTree(width);
+        }
+      }
+
+      for (let i = pinecones.length - 1; i >= 0; i--) {
+        let pinecone = pinecones[i];
+        pinecone.x -= 2 * scaleFactor;
+        if (newPineconeImg && newPineconeImg.width > 0) {
+          image(newPineconeImg, pinecone.x, pinecone.y, 30 * scaleFactor, 30 * scaleFactor);
+        } else if (pineconeImg && pineconeImg.width > 0) {
+          image(pineconeImg, pinecone.x, pinecone.y, 30 * scaleFactor, 30 * scaleFactor);
+        } else {
+          fill(139, 69, 19);
+          rect(pinecone.x, pinecone.y, 30 * scaleFactor, 30 * scaleFactor);
+        }
+
+        if (birdX + 25 * scaleFactor > pinecone.x && birdX - 25 * scaleFactor < pinecone.x + 30 * scaleFactor &&
+            birdY + 25 * scaleFactor > pinecone.y && birdY - 25 * scaleFactor < pinecone.y + 30 * scaleFactor) {
+          score += 5;
+          pinecones.splice(i, 1);
+        }
+
+        if (pinecone.x < -30 * scaleFactor) {
+          pinecones.splice(i, 1);
+        }
+      }
+
+      if (obstaclePauseTimer > 0) {
+        obstaclePauseTimer--;
+      }
+
+      if (invincibilityTimer > 0) {
+        invincibilityTimer--;
+      }
+
+      drawingContext.shadowBlur = 5;
+      drawingContext.shadowColor = 'rgba(0, 0, 0, 0.5)';
+      fill(255);
+      textSize(32 * scaleFactor);
+      text(`Punkte: ${score}`, width - 150 * scaleFactor, 40 * scaleFactor);
+      drawingContext.shadowBlur = 0;
+    } else if (gameState === 'quiz' && quiz) {
+      if (quizFade < 1) {
+        quizFade = min(quizFade + 0.02, 1);
+      }
+
+      let questionWidth = width * 0.8;
+      let questionHeight = height * 0.15;
+      let questionX = width / 2;
+      let questionY = height / 4;
+
+      drawingContext.shadowBlur = 10;
+      drawingContext.shadowColor = 'rgba(0, 0, 0, 0.3)';
+      fill(255, 255 * quizFade);
+      rectMode(CENTER);
+      rect(questionX, questionY, questionWidth, questionHeight, 15);
+      drawingContext.shadowBlur = 0;
+
+      textAlign(CENTER);
+      drawingContext.shadowBlur = 5;
+      drawingContext.shadowColor = 'rgba(0, 0, 0, 0.5)';
+      fill(255);
+      textSize(20 * scaleFactor);
+      text(`Frage ${currentQuestionIndex}/15`, questionX, questionY - 20 * scaleFactor);
+      drawingContext.shadowBlur = 0;
+
+      let questionText = quiz && quiz.question ? quiz.question : 'Fehler: Frage nicht verfügbar';
+      let baseFontSize = 28 * scaleFactor;
+      textSize(baseFontSize);
+      let textWidthValue = textWidth(questionText);
+      let maxWidth = questionWidth * 0.9;
+      let fontSize = baseFontSize;
+      if (textWidthValue > maxWidth) {
+        fontSize = baseFontSize * (maxWidth / textWidthValue);
+        fontSize = max(fontSize, 16 * scaleFactor);
+      }
+      textSize(fontSize);
+      drawingContext.shadowBlur = 5;
+      drawingContext.shadowColor = 'rgba(0, 0, 0, 0.5)';
+      fill(0);
+      text(questionText, questionX, questionY + 10 * scaleFactor);
+      drawingContext.shadowBlur = 0;
+
+      const buttonColors = [
+        [color(255, 99, 71), color(255, 140, 0)],
+        [color(50, 205, 50), color(0, 255, 127)],
+        [color(30, 144, 255), color(0, 191, 255)],
+        [color(255, 215, 0), color(255, 165, 0)]
+      ];
+
+      rectMode(CENTER);
+      let btnWidth = max(350 * scaleFactor, 250);
+      let btnHeight = windowWidth < 768 ? max(60 * scaleFactor, 50) : max(70 * scaleFactor, 60);
+      let maxButtonWidth = btnWidth * 0.9;
+      let baseAnswerFontSize = 24 * scaleFactor;
+      let buttonSpacing = windowWidth < 768 ? 100 * scaleFactor : 80 * scaleFactor;
+
+      let longestAnswer = quiz.options.reduce((a, b) => a.length > b.length ? a : b, '');
+      textSize(baseAnswerFontSize);
+      let longestAnswerWidth = textWidth(longestAnswer);
+      let answerFontSize = baseAnswerFontSize;
+      if (longestAnswerWidth > maxButtonWidth) {
+        answerFontSize = baseAnswerFontSize * (maxButtonWidth / longestAnswerWidth);
+        answerFontSize = max(answerFontSize, 14 * scaleFactor);
+      }
+
+      for (let i = 0; i < quiz.options.length; i++) {
+        let x = width / 2;
+        let y = windowWidth < 768 ? (height / 2 - 80 * scaleFactor + i * buttonSpacing) : (height / 2 + i * buttonSpacing - 40 * scaleFactor);
+        let scale = 1;
+        
+        if (mouseX > x - btnWidth / 2 && mouseX < x + btnWidth / 2 && mouseY > y - btnHeight / 2 && mouseY < y + btnHeight / 2) {
+          hoverIndex = i;
+          scale = 1.1;
+        } else if (hoverIndex === i) {
+          hoverIndex = -1;
+        }
+
+        drawingContext.shadowBlur = 10;
+        drawingContext.shadowColor = 'rgba(0, 0, 0, 0.3)';
+        let gradient = drawingContext.createLinearGradient(x - btnWidth / 2, y, x + btnWidth / 2, y);
+        gradient.addColorStop(0, buttonColors[i][0]);
+        gradient.addColorStop(1, buttonColors[i][1]);
+        drawingContext.fillStyle = gradient;
+        rect(x, y, btnWidth * scale, btnHeight * scale, 15);
+        drawingContext.shadowBlur = 0;
+
+        drawingContext.shadowBlur = 5;
+        drawingContext.shadowColor = 'rgba(0, 0, 0, 0.5)';
+        fill(255, 255 * quizFade);
+        textSize(answerFontSize);
+        text(quiz.options[i], x, y + 8 * scaleFactor);
+        drawingContext.shadowBlur = 0;
+      }
+
+      let barWidth = max(300 * scaleFactor, 200);
+      let barHeight = max(20 * scaleFactor, 15);
+      let barX = width / 2;
+      let barY = height - 60 * scaleFactor;
+      let timerProgress = quizTimer / (15 * 60);
+      let filledWidth = barWidth * timerProgress;
+
+      drawingContext.shadowBlur = 5;
+      drawingContext.shadowColor = 'rgba(0, 0, 0, 0.3)';
+      fill(100);
+      rect(barX, barY, barWidth, barHeight, 10);
+      let gradient = drawingContext.createLinearGradient(barX - barWidth / 2, barY, barX + barWidth / 2, barY);
+      gradient.addColorStop(0, color(255, 99, 71));
+      gradient.addColorStop(1, color(255, 215, 0));
+      drawingContext.fillStyle = gradient;
+      rectMode(CORNER);
+      rect(barX - barWidth / 2, barY - barHeight / 2, filledWidth, barHeight, 10);
+      rectMode(CENTER);
+      drawingContext.shadowBlur = 0;
+
+      drawingContext.shadowBlur = 3;
+      drawingContext.shadowColor = 'rgba(0, 0, 0, 0.5)';
+      fill(255, 255 * quizFade);
+      textSize(16 * scaleFactor);
+      text(ceil(quizTimer / 60), barX, barY + 5 * scaleFactor);
+      drawingContext.shadowBlur = 0;
+
+      quizTimer--;
+      if (quizTimer <= 0) {
         gameState = 'playing';
         quiz = null;
         obstaclePauseTimer = 120;
-        invincibilityTimer = 120;
       }
-    }
-  } else if (gameState === 'success') {
-    // Schwarzer Bildschirm mit Kennwort
-    fill(0);
-    rect(0, 0, width, height);
-    textAlign(CENTER);
-    fill(255);
-    textSize(32 * scaleFactor);
-    text("Kennwort: Baumlehrpfad", width / 2, height / 2);
-    
-    successTimer--;
-    if (successTimer <= 0) {
-      setup(); // Spiel neu starten
-    }
-  } else if (gameState === 'gameover') {
-    textAlign(CENTER);
-    textSize(32 * scaleFactor);
-    drawingContext.shadowBlur = 5;
-    drawingContext.shadowColor = 'rgba(0, 0, 0, 0.5)';
-    fill(255);
-    text(`Punkte: ${score}`, width / 2, height / 2 - 40 * scaleFactor);
-    text(`Richtige Fragen: ${correctAnswers}/15`, width / 2, height / 2);
-    if (restartDelayTimer <= 0) {
-      text("Bildschirm berühren oder Leertaste drücken um neu zu starten", width / 2, height / 2 + 40 * scaleFactor);
-    } else {
-      text(`Neustart möglich in ${ceil(restartDelayTimer / 60)} Sekunden`, width / 2, height / 2 + 40 * scaleFactor);
-    }
-    drawingContext.shadowBlur = 0;
+    } else if (gameState === 'quizResult') {
+      textAlign(CENTER);
+      textSize(48 * scaleFactor);
+      drawingContext.shadowBlur = 10;
+      drawingContext.shadowColor = 'rgba(0, 0, 0, 0.5)';
+      fill(quizResultMessage === 'Richtig!' ? color(0, 255, 0) : color(255, 0, 0));
+      text(quizResultMessage, width / 2, height / 2);
+      drawingContext.shadowBlur = 0;
 
-    if (restartDelayTimer > 0) {
-      restartDelayTimer--;
-    }
-
-    if (!confettiPlayed && confetti.length === 0) {
-      for (let i = 0; i < 100; i++) {
-        confetti.push({
-          x: random(width),
-          y: random(-50, 0),
-          size: random(5, 15) * scaleFactor,
-          speed: random(2, 5) * scaleFactor,
-          color: color(random(255), random(255), random(255)),
-          rotation: random(TWO_PI),
-          rotSpeed: random(-0.1, 0.1)
-        });
-      }
-      confettiPlayed = true;
-    }
-
-    for (let i = confetti.length - 1; i >= 0; i--) {
-      let c = confetti[i];
-      c.y += c.speed;
-      c.rotation += c.rotSpeed;
-      push();
-      translate(c.x, c.y);
-      rotate(c.rotation);
-      fill(c.color);
-      rect(0, 0, c.size, c.size);
-      pop();
-      if (c.y > height) {
-        confetti.splice(i, 1);
-      }
-    }
-  }
-}
-
-function keyPressed() {
-  if (key === ' ' && gameState === 'start') {
-    startGame();
-  } else if (key === ' ' && gameState === 'playing') {
-    if (startDelayTimer > 0) {
-      startDelayTimer = 0;
-      gravityActive = true;
-    }
-    birdVelocity = -8 * scaleFactor;
-  } else if (key === ' ' && gameState === 'gameover' && restartDelayTimer <= 0) {
-    setup();
-  } else if (key === 'k') {
-    // Dreimal "k" für Test des Success-Screens
-    kPressTimes.push(frameCount);
-    kPressTimes = kPressTimes.filter(time => frameCount - time < 60); // Innerhalb von 1 Sekunde
-    if (kPressTimes.length >= 3) {
-      gameState = 'success';
-      successTimer = 300; // 5 Sekunden
-      kPressTimes = [];
-    }
-  }
-}
-
-function mousePressed() {
-  handleInput();
-}
-
-function touchStarted() {
-  handleInput();
-  return false;
-}
-
-function handleInput() {
-  if (gameState === 'start') {
-    let btnWidth = max(200 * scaleFactor, 200);
-    let btnHeight = max(60 * scaleFactor, 60);
-    let btnX = width / 2;
-    let btnY = height / 2 + 50 * scaleFactor;
-    if (mouseX > btnX - btnWidth / 2 && mouseX < btnX + btnWidth / 2 &&
-        mouseY > btnY - btnHeight / 2 && mouseY < btnY + btnHeight / 2) {
-      startGame();
-    }
-  } else if (gameState === 'playing') {
-    if (startDoor {
-    // Schwarzer Bildschirm mit Kennwort
-    fill(0);
-    rect(0, 0, width, height);
-    textAlign(CENTER);
-    fill(255);
-    textSize(32 * scaleFactor);
-    text("Kennwort: Baumlehrpfad", width / 2, height / 2);
-    
-    successTimer--;
-    if (successTimer <= 0) {
-      setup(); // Spiel neu starten
-    }
-  } else if (gameState === 'gameover') {
-    textAlign(CENTER);
-    textSize(32 * scaleFactor);
-    drawingContext.shadowBlur = 5;
-    drawingContext.shadowColor = 'rgba(0, 0, 0, 0.5)';
-    fill(255);
-    text(`Punkte: ${score}`, width / 2, height / 2 - 40 * scaleFactor);
-    text(`Richtige Fragen: ${correctAnswers}/15`, width / 2, height / 2);
-    if (restartDelayTimer <= 0) {
-      text("Bildschirm berühren oder Leertaste drücken um neu zu starten", width / 2, height / 2 + 40 * scaleFactor);
-    } else {
-      text(`Neustart möglich in ${ceil(restartDelayTimer / 60)} Sekunden`, width / 2, height / 2 + 40 * scaleFactor);
-    }
-    drawingContext.shadowBlur = 0;
-
-    if (restartDelayTimer > 0) {
-      restartDelayTimer--;
-    }
-
-    if (!confettiPlayed && confetti.length === 0) {
-      for (let i = 0; i < 100; i++) {
-        confetti.push({
-          x: random(width),
-          y: random(-50, 0),
-          size: random(5, 15) * scaleFactor,
-          speed: random(2, 5) * scaleFactor,
-          color: color(random(255), random(255), random(255)),
-          rotation: random(TWO_PI),
-          rotSpeed: random(-0.1, 0.1)
-        });
-      }
-      confettiPlayed = true;
-    }
-
-    for (let i = confetti.length - 1; i >= 0; i--) {
-      let c = confetti[i];
-      c.y += c.speed;
-      c.rotation += c.rotSpeed;
-      push();
-      translate(c.x, c.y);
-      rotate(c.rotation);
-      fill(c.color);
-      rect(0, 0, c.size, c.size);
-      pop();
-      if (c.y > height) {
-        confetti.splice(i, 1);
-      }
-    }
-  }
-}
-
-function keyPressed() {
-  if (key === ' ' && gameState === 'start') {
-    startGame();
-  } else if (key === ' ' && gameState === 'playing') {
-    if (startDelayTimer > 0) {
-      startDelayTimer = 0;
-      gravityActive = true;
-    }
-    birdVelocity = -8 * scaleFactor;
-  } else if (key === ' ' && gameState === 'gameover' && restartDelayTimer <= 0) {
-    setup();
-  } else if (key === 'k') {
-    // Dreimal "k" für Test des Success-Screens
-    kPressTimes.push(frameCount);
-    kPressTimes = kPressTimes.filter(time => frameCount - time < 60); // Innerhalb von 1 Sekunde
-    if (kPressTimes.length >= 3) {
-      gameState = 'success';
-      successTimer = 300; // 5 Sekunden
-      kPressTimes = [];
-    }
-  }
-}
-
-function mousePressed() {
-  handleInput();
-}
-
-function touchStarted() {
-  handleInput();
-  return false;
-}
-
-function handleInput() {
-  if (gameState === 'start') {
-    let btnWidth = max(200 * scaleFactor, 200);
-    let btnHeight = max(60 * scaleFactor, 60);
-    let btnX = width / 2;
-    let btnY = height / 2 + 50 * scaleFactor;
-    if (mouseX > btnX - btnWidth / 2 && mouseX < btnX + btnWidth / 2 &&
-        mouseY > btnY - btnHeight / 2 && mouseY < btnY + btnHeight / 2) {
-      startGame();
-    }
-  } else if (gameState === 'playing') {
-    if (startDelayTimer > 0) {
-      startDelayTimer = 0;
-      gravityActive = true;
-    }
-    birdVelocity = -8 * scaleFactor;
-  } else if (gameState === 'quiz' && quiz) {
-    for (let i = 0; i < quiz.options.length; i++) {
-      let x = width / 2;
-      let y = windowWidth < 768 ? (height / 2 - 80 * scaleFactor + i * 100 * scaleFactor) : (height / 2 + i * 80 * scaleFactor - 40 * scaleFactor);
-      let btnWidth = max(350 * scaleFactor, 250);
-      let btnHeight = windowWidth < 768 ? max(60 * scaleFactor, 50) : max(70 * scaleFactor, 60);
-      let touchX = mouseX;
-      let touchY = mouseY;
-      if (touchX > x - btnWidth / 2 && touchX < x + btnWidth / 2 && touchY > y - btnHeight / 2 && touchY < y + btnHeight / 2) {
-        totalQuestionsAnswered++;
-        if (totalQuestionsAnswered > 15) totalQuestionsAnswered = 15;
-        if (i === quiz.correct) {
-          correctAnswers++;
-          score += 10;
-          quizResultMessage = 'Richtig!';
+      quizResultTimer--;
+      if (quizResultTimer <= 0) {
+        if (correctAnswers >= 15) {
+          gameState = 'success';
+          successTimer = 300;
         } else {
-          quizResultMessage = 'Falsch!';
+          gameState = 'playing';
+          quiz = null;
+          obstaclePauseTimer = 120;
+          invincibilityTimer = 120;
         }
-        gameState = 'quizResult';
-        quizResultTimer = 120;
-        break;
+      }
+    } else if (gameState === 'success') {
+      fill(0);
+      rect(0, 0, width, height);
+      textAlign(CENTER);
+      fill(255);
+      textSize(32 * scaleFactor);
+      text("Kennwort: Baumlehrpfad", width / 2, height / 2);
+      
+      successTimer--;
+      if (successTimer <= 0) {
+        setup();
+      }
+    } else if (gameState === 'gameover') {
+      textAlign(CENTER);
+      textSize(32 * scaleFactor);
+      drawingContext.shadowBlur = 5;
+      drawingContext.shadowColor = 'rgba(0, 0, 0, 0.5)';
+      fill(255);
+      text(`Punkte: ${score}`, width / 2, height / 2 - 40 * scaleFactor);
+      text(`Richtige Fragen: ${correctAnswers}/15`, width / 2, height / 2);
+      if (restartDelayTimer <= 0) {
+        text("Bildschirm berühren oder Leertaste drücken um neu zu starten", width / 2, height / 2 + 40 * scaleFactor);
+      } else {
+        text(`Neustart möglich in ${ceil(restartDelayTimer / 60)} Sekunden`, width / 2, height / 2 + 40 * scaleFactor);
+      }
+      drawingContext.shadowBlur = 0;
+
+      if (restartDelayTimer > 0) {
+        restartDelayTimer--;
+      }
+
+      if (!confettiPlayed && confetti.length === 0) {
+        for (let i = 0; i < 100; i++) {
+          confetti.push({
+            x: random(width),
+            y: random(-50, 0),
+            size: random(5, 15) * scaleFactor,
+            speed: random(2, 5) * scaleFactor,
+            color: color(random(255), random(255), random(255)),
+            rotation: random(TWO_PI),
+            rotSpeed: random(-0.1, 0.1)
+          });
+        }
+        confettiPlayed = true;
+      }
+
+      for (let i = confetti.length - 1; i >= 0; i--) {
+        let c = confetti[i];
+        c.y += c.speed;
+        c.rotation += c.rotSpeed;
+        push();
+        translate(c.x, c.y);
+        rotate(c.rotation);
+        fill(c.color);
+        rect(0, 0, c.size, c.size);
+        pop();
+        if (c.y > height) {
+          confetti.splice(i, 1);
+        }
       }
     }
-  } else if (gameState === 'gameover' && restartDelayTimer <= 0) {
-    setup();
+  } catch (e) {
+    console.error('Error in draw:', e);
+    // Fallback-Anzeige
+    background(255);
+    fill(255, 0, 0);
+    textAlign(CENTER);
+    textSize(20);
+    text("Ein Fehler ist aufgetreten. Bitte Konsole prüfen.", width / 2, height / 2);
+  }
+}
+
+function keyPressed() {
+  try {
+    if (key === ' ' && gameState === 'start') {
+      startGame();
+    } else if (key === ' ' && gameState === 'playing') {
+      if (startDelayTimer > 0) {
+        startDelayTimer = 0;
+        gravityActive = true;
+      }
+      birdVelocity = -8 * scaleFactor;
+    } else if (key === ' ' && gameState === 'gameover' && restartDelayTimer <= 0) {
+      setup();
+    } else if (key === 'k') {
+      kPressTimes.push(frameCount);
+      kPressTimes = kPressTimes.filter(time => frameCount - time < 60);
+      if (kPressTimes.length >= 3) {
+        gameState = 'success';
+        successTimer = 300;
+        kPressTimes = [];
+      }
+    }
+  } catch (e) {
+    console.error('Error in keyPressed:', e);
+  }
+}
+
+function mousePressed() {
+  handleInput();
+}
+
+function touchStarted() {
+  handleInput();
+  return false;
+}
+
+function handleInput() {
+  try {
+    if (gameState === 'start') {
+      let btnWidth = max(200 * scaleFactor, 200);
+      let btnHeight = max(60 * scaleFactor, 60);
+      let btnX = width / 2;
+      let btnY = height / 2 + 50 * scaleFactor;
+      if (mouseX > btnX - btnWidth / 2 && mouseX < btnX + btnWidth / 2 &&
+          mouseY > btnY - btnHeight / 2 && mouseY < btnY + btnHeight / 2) {
+        startGame();
+      }
+    } else if (gameState === 'playing') {
+      if (startDelayTimer > 0) {
+        startDelayTimer = 0;
+        gravityActive = true;
+      }
+      birdVelocity = -8 * scaleFactor;
+    } else if (gameState === 'quiz' && quiz) {
+      for (let i = 0; i < quiz.options.length; i++) {
+        let x = width / 2;
+        let y = windowWidth < 768 ? (height / 2 - 80 * scaleFactor + i * 100 * scaleFactor) : (height / 2 + i * 80 * scaleFactor - 40 * scaleFactor);
+        let btnWidth = max(350 * scaleFactor, 250);
+        let btnHeight = windowWidth < 768 ? max(60 * scaleFactor, 50) : max(70 * scaleFactor, 60);
+        let touchX = mouseX;
+        let touchY = mouseY;
+        if (touchX > x - btnWidth / 2 && touchX < x + btnWidth / 2 && touchY > y - btnHeight / 2 && touchY < y + btnHeight / 2) {
+          totalQuestionsAnswered++;
+          if (totalQuestionsAnswered > 15) totalQuestionsAnswered = 15;
+          if (i === quiz.correct) {
+            correctAnswers++;
+            score += 10;
+            quizResultMessage = 'Richtig!';
+          } else {
+            quizResultMessage = 'Falsch!';
+          }
+          gameState = 'quizResult';
+          quizResultTimer = 120;
+          break;
+        }
+      }
+    } else if (gameState === 'gameover' && restartDelayTimer <= 0) {
+      setup();
+    }
+  } catch (e) {
+    console.error('Error in handleInput:', e);
   }
 }
 
 function startGame() {
-  gameState = 'playing';
-  newBird = loadImage('./bird.png', 
-    () => console.log('New Bird loaded successfully'), 
-    () => {
-      console.error('Failed to load ./bird.png, using placeholder');
-      bird = loadImage('https://images.pexels.com/photos/326900/pexels-photo-326900.jpeg', 
-        () => console.log('Bird placeholder loaded successfully'), 
-        () => console.error('Failed to load bird placeholder image')
-      );
-    }
-  );
-  startDelayTimer = 120;
+  try {
+    gameState = 'playing';
+    newBird = loadImage('./bird.png', 
+      () => console.log('New Bird loaded successfully'), 
+      () => {
+        console.error('Failed to load ./bird.png, using placeholder');
+        bird = createImage(50, 50);
+        bird.loadPixels();
+        for (let i = 0; i < bird.width * bird.height * 4; i += 4) {
+          bird.pixels[i] = 255;
+          bird.pixels[i + 1] = 0;
+          bird.pixels[i + 2] = 0;
+          bird.pixels[i + 3] = 255;
+        }
+        bird.updatePixels();
+      }
+    );
+    startDelayTimer = 120;
+  } catch (e) {
+    console.error('Error in startGame:', e);
+  }
 }
 
 function spawnTree(x) {
-  let minGap = windowWidth < windowHeight ? 350 * scaleFactor : (windowWidth < 768 ? 300 * scaleFactor : 200 * scaleFactor); // Größere Lücke im Hochformat
-  let maxGap = 400 * scaleFactor;
-  let gapRange = maxGap - minGap;
-  let difficultyFactor = windowWidth < 768 ? 0 : constrain(score / 100, 0, 1); // Keine Schwierigkeitssteigerung auf Smartphone/Tablet
-  let gapSize = maxGap - gapRange * difficultyFactor;
-  let gapY = windowWidth < windowHeight ? random(height / 3, 2 * height / 3) : (windowWidth < 768 ? random(height / 4, 3 * height / 4) : random(max(100 * scaleFactor, gapSize), min(height - gapSize - 100 * scaleFactor, height - 100 * scaleFactor)));
-  trees.push({ x: x, gapY: gapY, passed: false });
-  if (random() < 0.7) {
-    // Dynamischer Abstand für Zapfen basierend auf obstaclesPassed
-    let pineconeDistance = max(50 * scaleFactor, 100 * scaleFactor - (obstaclesPassed * 5 * scaleFactor));
-    // Zufällige vertikale Position innerhalb der Lücke
-    let pineconeY = random(gapY - 50 * scaleFactor, gapY + 100 * scaleFactor);
-    pinecones.push({ x: x + pineconeDistance, y: pineconeY });
+  try {
+    let minGap = windowWidth < windowHeight ? 350 : (windowWidth < 768 ? 300 : 200);
+    let maxGap = 400;
+    let gapRange = maxGap - minGap;
+    let difficultyFactor = windowWidth < 768 ? 0 : constrain(score / 100, 0, 1);
+    let gapSize = maxGap - gapRange * difficultyFactor;
+    let gapY = windowWidth < windowHeight ? random(height / 3, 2 * height / 3) : (windowWidth < 768 ? random(height / 4, 3 * height / 4) : random(max(100, gapSize), min(height - gapSize - 100, height - 100)));
+    trees.push({ x: x, gapY: gapY, passed: false });
+    if (random() < 0.7) {
+      let pineconeDistance = max(50, 100 - (obstaclesPassed * 5));
+      let pineconeY = random(gapY - 50, gapY + 100);
+      pinecones.push({ x: x + pineconeDistance, y: pineconeY });
+    }
+  } catch (e) {
+    console.error('Error in spawnTree:', e);
   }
 }
 
 function startQuiz() {
-  if (currentQuestionIndex < shuffledQuestions.length) {
-    gameState = 'quiz';
-    quiz = shuffledQuestions[currentQuestionIndex];
-    currentQuestionIndex++;
-    quizTimer = 15 * 60;
-    quizFade = 0;
-    console.log('Quiz started:', quiz.question, 'Options:', quiz.options);
-  } else {
-    resetGame();
+  try {
+    if (currentQuestionIndex < shuffledQuestions.length) {
+      gameState = 'quiz';
+      quiz = shuffledQuestions[currentQuestionIndex];
+      currentQuestionIndex++;
+      quizTimer = 15 * 60;
+      quizFade = 0;
+      console.log('Quiz started:', quiz.question, 'Options:', quiz.options);
+    } else {
+      resetGame();
+    }
+  } catch (e) {
+    console.error('Error in startQuiz:', e);
   }
 }
 
 function resetGame() {
-  gameState = 'gameover';
-  confetti = [];
-  confettiPlayed = false;
-  restartDelayTimer = 300;
+  try {
+    gameState = 'gameover';
+    confetti = [];
+    confettiPlayed = false;
+    restartDelayTimer = 300;
+  } catch (e) {
+    console.error('Error in resetGame:', e);
+  }
 }
 
 function windowResized() {
-  resizeCanvas(windowWidth, windowHeight);
-  scaleFactor = min(windowWidth / 800, windowHeight / 600);
-  birdX = width / 4;
-  birdY = height / 2;
+  try {
+    resizeCanvas(windowWidth, windowHeight);
+    scaleFactor = min(windowWidth / 800, windowHeight / 600);
+    birdX = width / 4;
+    birdY = height / 2;
+  } catch (e) {
+    console.error('Error in windowResized:', e);
+  }
 }
 </script>
 </body>
