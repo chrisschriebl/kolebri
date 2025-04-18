@@ -55,6 +55,7 @@ let successTimer = 0;
 let kPressTimes = [];
 let pineconeDifficulty = 0;
 let scoreFlashTimer = 0;
+let scoreFlashScale = 1;
 
 const quizQuestions = [
   {
@@ -231,6 +232,7 @@ function setup() {
     kPressTimes = [];
     pineconeDifficulty = 0;
     scoreFlashTimer = 0;
+    scoreFlashScale = 1;
     
     shuffledQuestions = [...quizQuestions];
     for (let i = shuffledQuestions.length - 1; i > 0; i--) {
@@ -428,6 +430,7 @@ function draw() {
             birdY + 25 * scaleFactor > pinecone.y && birdY - 25 * scaleFactor < pinecone.y + 30 * scaleFactor) {
           score += 5;
           scoreFlashTimer = 30;
+          scoreFlashScale = 1.5;
           pinecones.splice(i, 1);
         }
 
@@ -446,12 +449,15 @@ function draw() {
 
       if (scoreFlashTimer > 0) {
         scoreFlashTimer--;
+        scoreFlashScale = lerp(scoreFlashScale, 1, 0.1);
+      } else {
+        scoreFlashScale = 1;
       }
 
-      drawingContext.shadowBlur = 5;
+      drawingContext.shadowBlur = scoreFlashTimer > 0 ? 10 : 5;
       drawingContext.shadowColor = 'rgba(0, 0, 0, 0.5)';
-      fill(scoreFlashTimer > 0 ? color(255, 255, 0) : 255);
-      textSize(32 * scaleFactor);
+      fill(scoreFlashTimer > 0 ? color(255, 255, 100) : 255);
+      textSize(32 * scaleFactor * scoreFlashScale);
       text(`Punkte: ${score}`, width - 150 * scaleFactor, 40 * scaleFactor);
       drawingContext.shadowBlur = 0;
     } else if (gameState === 'quiz' && quiz) {
@@ -785,21 +791,21 @@ function startGame() {
 function spawnTree(x) {
   try {
     let gapSize = 200 * scaleFactor;
-    let minY = height * 0.3;
-    let maxY = height * 0.7 - gapSize;
+    let minY = height * 0.2;
+    let maxY = height * 0.8 - gapSize;
     let gapY = random(minY, maxY);
     trees.push({ x: x, gapY: gapY, passed: false });
     if (random() < 0.7) {
       let pineconeY;
       let region = floor(random(3));
-      if (region === 0 && gapY >= 50 * scaleFactor) {
+      if (region === 0 && gapY >= 100 * scaleFactor) {
         pineconeY = random(50 * scaleFactor, gapY - 50 * scaleFactor);
       } else if (region === 1) {
-        pineconeY = random(gapY, gapY + gapSize);
-      } else if (region === 2 && gapY + gapSize <= height - 50 * scaleFactor) {
+        pineconeY = random(gapY + 50 * scaleFactor, gapY + gapSize - 50 * scaleFactor);
+      } else if (region === 2 && gapY + gapSize <= height - 100 * scaleFactor) {
         pineconeY = random(gapY + gapSize + 50 * scaleFactor, height - 50 * scaleFactor);
       } else {
-        pineconeY = random(gapY, gapY + gapSize);
+        pineconeY = random(gapY + 50 * scaleFactor, gapY + gapSize - 50 * scaleFactor);
       }
       pinecones.push({ x: x + (50 - 30 * pineconeDifficulty) * scaleFactor, y: pineconeY });
     }
