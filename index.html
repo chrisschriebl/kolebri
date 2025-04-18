@@ -10,9 +10,13 @@
       padding: 0;
       overflow: hidden;
       touch-action: none;
+      width: 100%;
+      height: 100vh;
     }
     canvas {
       display: block;
+      width: 100% !important;
+      height: 100% !important;
     }
   </style>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
@@ -20,7 +24,8 @@
 </head>
 <body>
 <script>
-let bird, treeImg, pineconeImg, bgImg;
+let bird, treeImg, upperTreeImg, pineconeImg, bgImg;
+let newBird, newTreeImg, newUpperTreeImg, newPineconeImg, newBgImg;
 let birdX, birdY, birdVelocity, gravity;
 let trees = [];
 let pinecones = [];
@@ -41,7 +46,9 @@ let shuffledQuestions = [];
 let currentQuestionIndex = 0;
 let obstaclePauseTimer = 0;
 let restartDelayTimer = 0;
-let gravityActive = false; // Steuert, ob die Schwerkraft aktiv ist
+let gravityActive = false;
+let startDelayTimer = 0;
+let confettiPlayed = false;
 
 const quizQuestions = [
   {
@@ -123,21 +130,49 @@ const quizQuestions = [
 
 function preload() {
   try {
-    bird = loadImage('https://images.pexels.com/photos/326900/pexels-photo-326900.jpeg', 
-      () => console.log('Bird loaded successfully'), 
-      () => console.error('Failed to load bird image from Pexels')
+    // Lade die Bilder mit relativen Pfaden, mit Fallback auf Platzhalterbilder
+    newBgImg = loadImage('./background.jpg', 
+      () => console.log('New Background loaded successfully'), 
+      () => {
+        console.error('Failed to load ./background.jpg, using placeholder');
+        bgImg = loadImage('https://images.pexels.com/photos/38136/pexels-photo-38136.jpeg', 
+          () => console.log('Background placeholder loaded successfully'), 
+          () => console.error('Failed to load background placeholder image')
+        );
+      }
     );
-    treeImg = loadImage('https://images.pexels.com/photos/1612351/pexels-photo-1612351.jpeg', 
-      () => console.log('Tree loaded'), 
-      () => console.error('Failed to load tree image')
+
+    newTreeImg = loadImage('./stammunten.png', 
+      () => console.log('New Lower Obstacle loaded successfully'), 
+      () => {
+        console.error('Failed to load ./stammunten.png, using placeholder');
+        treeImg = loadImage('https://images.pexels.com/photos/1612351/pexels-photo-1612351.jpeg', 
+          () => console.log('Lower Obstacle placeholder loaded successfully'), 
+          () => console.error('Failed to load lower obstacle placeholder image')
+        );
+      }
     );
-    pineconeImg = loadImage('https://images.pexels.com/photos/380284/pexels-photo-380284.jpeg', 
-      () => console.log('Zapfen loaded successfully'), 
-      () => console.error('Failed to load zapfen image from Pexels')
+
+    newUpperTreeImg = loadImage('./stammoben.png', 
+      () => console.log('New Upper Obstacle loaded successfully'), 
+      () => {
+        console.error('Failed to load ./stammoben.png, using placeholder');
+        upperTreeImg = loadImage('https://images.pexels.com/photos/164353/pexels-photo-164353.jpeg', 
+          () => console.log('Upper Obstacle placeholder loaded successfully'), 
+          () => console.error('Failed to load upper obstacle placeholder image')
+        );
+      }
     );
-    bgImg = loadImage('https://images.pexels.com/photos/38136/pexels-photo-38136.jpeg', 
-      () => console.log('Background loaded'), 
-      () => console.error('Failed to load background image')
+
+    newPineconeImg = loadImage('./zapfen.png', 
+      () => console.log('New Zapfen loaded successfully'), 
+      () => {
+        console.error('Failed to load ./zapfen.png, using placeholder');
+        pineconeImg = loadImage('https://images.pexels.com/photos/380284/pexels-photo-380284.jpeg', 
+          () => console.log('Zapfen placeholder loaded successfully'), 
+          () => console.error('Failed to load zapfen placeholder image')
+        );
+      }
     );
   } catch (e) {
     console.error('Error in preload:', e);
@@ -150,7 +185,7 @@ function setup() {
   birdX = width / 4;
   birdY = height / 2;
   birdVelocity = 0;
-  gravity = 0.8 * scaleFactor;
+  gravity = 0.5 * scaleFactor;
   trees = [];
   pinecones = [];
   score = 0;
@@ -163,6 +198,8 @@ function setup() {
   obstaclePauseTimer = 0;
   restartDelayTimer = 0;
   gravityActive = false;
+  startDelayTimer = 0;
+  confettiPlayed = false;
   
   // Mische die Fragen in zufälliger Reihenfolge
   shuffledQuestions = [...quizQuestions];
@@ -181,13 +218,49 @@ function setup() {
 function draw() {
   clear();
   background(0, 100, 0);
-  if (bgImg) {
-    image(bgImg, 0, 0, width, height);
+
+  // Hintergrundbild proportional skalieren (Cover-Methode)
+  if (newBgImg && newBgImg.width > 0) {
+    let imgAspect = newBgImg.width / newBgImg.height;
+    let canvasAspect = width / height;
+    let imgWidth, imgHeight, imgX, imgY;
+
+    if (imgAspect > canvasAspect) {
+      // Bild ist breiter als der Canvas: Skaliere nach Höhe
+      imgHeight = height;
+      imgWidth = height * imgAspect;
+      imgX = (width - imgWidth) / 2;
+      imgY = 0;
+    } else {
+      // Bild ist höher als der Canvas: Skaliere nach Breite
+      imgWidth = width;
+      imgHeight = width / imgAspect;
+      imgX = 0;
+      imgY = (height - imgHeight) / 2;
+    }
+    image(newBgImg, imgX, imgY, imgWidth, imgHeight);
+  } else if (bgImg) {
+    let imgAspect = bgImg.width / bgImg.height;
+    let canvasAspect = width / height;
+    let imgWidth, imgHeight, imgX, imgY;
+
+    if (imgAspect > canvasAspect) {
+      imgHeight = height;
+      imgWidth = height * imgAspect;
+      imgX = (width - imgWidth) / 2;
+      imgY = 0;
+    } else {
+      imgWidth = width;
+      imgHeight = width / imgAspect;
+      imgX = 0;
+      imgY = (height - imgHeight) / 2;
+    }
+    image(bgImg, imgX, imgY, imgWidth, imgHeight);
   }
 
   if (gameState === 'start') {
-    //fill(0, 0, 0, 200);
-   // rect(0, 0, width, height);
+    fill(0, 0, 0, 200);
+    rect(0, 0, width, height, 15);
 
     textAlign(CENTER);
     drawingContext.shadowBlur = 10;
@@ -206,8 +279,8 @@ function draw() {
         mouseY > btnY - btnHeight / 2 && mouseY < btnY + btnHeight / 2) {
       hoverIndex = 0;
     }
-    let baseColor = color(139, 69, 19); // Hellbraun (SaddleBrown)
-    let hoverColor = color(92, 46, 13); // Dunkleres Braun
+    let baseColor = color(139, 69, 19);
+    let hoverColor = color(92, 46, 13);
     let buttonColor = hoverIndex === 0 ? hoverColor : baseColor;
     drawingContext.shadowBlur = 10;
     drawingContext.shadowColor = 'rgba(0, 0, 0, 0.3)';
@@ -223,36 +296,65 @@ function draw() {
     text("Spiel Starten", btnX, btnY + 7 * scaleFactor);
     drawingContext.shadowBlur = 0;
 
-    // Vogel bleibt in der Mitte, solange das Spiel nicht gestartet ist
-    if (bird && bird.width > 0) {
-      image(bird, birdX - 25 * scaleFactor, birdY - 25 * scaleFactor, 50 * scaleFactor, 50 * scaleFactor);
-    } else {
-      fill(255, 0, 0);
-      rect(birdX - 25 * scaleFactor, birdY - 25 * scaleFactor, 50 * scaleFactor, 50 * scaleFactor);
-    }
+    // Hinweis für Leertaste hinzufügen
+    drawingContext.shadowBlur = 5;
+    drawingContext.shadowColor = 'rgba(0, 0, 0, 0.5)';
+    fill(255);
+    textSize(20 * scaleFactor);
+    text("Drücke die Leertaste zum Spielen", width / 2, btnY + btnHeight / 2 + 30 * scaleFactor);
+    drawingContext.shadowBlur = 0;
   } else if (gameState === 'playing') {
+    if (startDelayTimer > 0) {
+      startDelayTimer--;
+      if (startDelayTimer <= 0) {
+        gravityActive = true;
+      }
+    }
+
     if (gravityActive) {
       birdVelocity += gravity;
       birdY += birdVelocity;
     }
 
-    if (bird && bird.width > 0) {
+    if (newBird && newBird.width > 0) {
+      image(newBird, birdX - 25 * scaleFactor, birdY - 25 * scaleFactor, 50 * scaleFactor, 50 * scaleFactor);
+    } else if (bird && bird.width > 0) {
       image(bird, birdX - 25 * scaleFactor, birdY - 25 * scaleFactor, 50 * scaleFactor, 50 * scaleFactor);
     } else {
       fill(255, 0, 0);
       rect(birdX - 25 * scaleFactor, birdY - 25 * scaleFactor, 50 * scaleFactor, 50 * scaleFactor);
     }
 
-    if ((birdY > height || birdY < 0) && gravityActive) {
+    if (birdY > height || birdY < 0) {
       resetGame();
     }
 
     for (let i = trees.length - 1; i >= 0; i--) {
       let tree = trees[i];
-      tree.x -= 3 * scaleFactor;
-      if (treeImg) {
+      tree.x -= 2 * scaleFactor;
+
+      // Zeichne das obere Hindernis mit Fallback
+      if (newUpperTreeImg && newUpperTreeImg.width > 0) {
+        image(newUpperTreeImg, tree.x, 0, 100 * scaleFactor, tree.gapY - 100 * scaleFactor);
+      } else if (upperTreeImg && upperTreeImg.width > 0) {
+        image(upperTreeImg, tree.x, 0, 100 * scaleFactor, tree.gapY - 100 * scaleFactor);
+      } else if (newTreeImg && newTreeImg.width > 0) {
+        image(newTreeImg, tree.x, 0, 100 * scaleFactor, tree.gapY - 100 * scaleFactor);
+      } else if (treeImg && treeImg.width > 0) {
         image(treeImg, tree.x, 0, 100 * scaleFactor, tree.gapY - 100 * scaleFactor);
+      } else {
+        fill(0, 128, 0);
+        rect(tree.x, 0, 100 * scaleFactor, tree.gapY - 100 * scaleFactor);
+      }
+
+      // Zeichne das untere Hindernis mit Fallback
+      if (newTreeImg && newTreeImg.width > 0) {
+        image(newTreeImg, tree.x, tree.gapY + 150 * scaleFactor, 100 * scaleFactor, height - (tree.gapY + 150 * scaleFactor));
+      } else if (treeImg && treeImg.width > 0) {
         image(treeImg, tree.x, tree.gapY + 150 * scaleFactor, 100 * scaleFactor, height - (tree.gapY + 150 * scaleFactor));
+      } else {
+        fill(0, 128, 0);
+        rect(tree.x, tree.gapY + 150 * scaleFactor, 100 * scaleFactor, height - (tree.gapY + 150 * scaleFactor));
       }
 
       if (birdX + 25 * scaleFactor > tree.x && birdX - 25 * scaleFactor < tree.x + 100 * scaleFactor) {
@@ -281,8 +383,10 @@ function draw() {
 
     for (let i = pinecones.length - 1; i >= 0; i--) {
       let pinecone = pinecones[i];
-      pinecone.x -= 3 * scaleFactor;
-      if (pineconeImg) {
+      pinecone.x -= 2 * scaleFactor;
+      if (newPineconeImg && newPineconeImg.width > 0) {
+        image(newPineconeImg, pinecone.x, pinecone.y, 30 * scaleFactor, 30 * scaleFactor);
+      } else if (pineconeImg) {
         image(pineconeImg, pinecone.x, pinecone.y, 30 * scaleFactor, 30 * scaleFactor);
       }
 
@@ -299,9 +403,6 @@ function draw() {
 
     if (obstaclePauseTimer > 0) {
       obstaclePauseTimer--;
-      if (obstaclePauseTimer <= 0) {
-        gravityActive = true; // Schwerkraft nach der Pause wieder aktivieren
-      }
     }
 
     drawingContext.shadowBlur = 5;
@@ -430,6 +531,7 @@ function draw() {
     if (quizTimer <= 0) {
       gameState = 'playing';
       quiz = null;
+      obstaclePauseTimer = 120;
     }
   } else if (gameState === 'quizResult') {
     fill(0, 0, 0, 200);
@@ -451,16 +553,7 @@ function draw() {
         gameState = 'playing';
         quiz = null;
         obstaclePauseTimer = 120;
-        gravityActive = false; // Schwerkraft deaktivieren während der Pause
       }
-    }
-
-    // Vogel während der "Richtig!"/"Falsch!"-Meldung anzeigen
-    if (bird && bird.width > 0) {
-      image(bird, birdX - 25 * scaleFactor, birdY - 25 * scaleFactor, 50 * scaleFactor, 50 * scaleFactor);
-    } else {
-      fill(255, 0, 0);
-      rect(birdX - 25 * scaleFactor, birdY - 25 * scaleFactor, 50 * scaleFactor, 50 * scaleFactor);
     }
   } else if (gameState === 'gameover') {
     drawingContext.shadowBlur = 0;
@@ -484,7 +577,7 @@ function draw() {
       restartDelayTimer--;
     }
 
-    if (confetti.length === 0) {
+    if (!confettiPlayed && confetti.length === 0) {
       for (let i = 0; i < 100; i++) {
         confetti.push({
           x: random(width),
@@ -496,6 +589,7 @@ function draw() {
           rotSpeed: random(-0.1, 0.1)
         });
       }
+      confettiPlayed = true;
     }
 
     for (let i = confetti.length - 1; i >= 0; i--) {
@@ -518,10 +612,12 @@ function draw() {
 function keyPressed() {
   if (key === ' ' && gameState === 'start') {
     startGame();
-    gravityActive = true; // Schwerkraft aktivieren, sobald das Spiel startet
   } else if (key === ' ' && gameState === 'playing') {
-    birdVelocity = -12 * scaleFactor;
-    gravityActive = true; // Sicherstellen, dass Schwerkraft aktiv ist, wenn die Leertaste gedrückt wird
+    if (startDelayTimer > 0) {
+      startDelayTimer = 0;
+      gravityActive = true;
+    }
+    birdVelocity = -8 * scaleFactor;
   } else if (key === ' ' && gameState === 'gameover' && restartDelayTimer <= 0) {
     setup();
   }
@@ -545,11 +641,13 @@ function handleInput() {
     if (mouseX > btnX - btnWidth / 2 && mouseX < btnX + btnWidth / 2 &&
         mouseY > btnY - btnHeight / 2 && mouseY < btnY + btnHeight / 2) {
       startGame();
-      gravityActive = true; // Schwerkraft aktivieren, sobald das Spiel startet
     }
   } else if (gameState === 'playing') {
-    birdVelocity = -12 * scaleFactor;
-    gravityActive = true; // Sicherstellen, dass Schwerkraft aktiv ist, wenn getippt wird
+    if (startDelayTimer > 0) {
+      startDelayTimer = 0;
+      gravityActive = true;
+    }
+    birdVelocity = -8 * scaleFactor;
   } else if (gameState === 'quiz' && quiz) {
     for (let i = 0; i < quiz.options.length; i++) {
       let x = width / 2;
@@ -580,13 +678,24 @@ function handleInput() {
 
 function startGame() {
   gameState = 'playing';
+  newBird = loadImage('./bird.png', 
+    () => console.log('New Bird loaded successfully'), 
+    () => {
+      console.error('Failed to load ./bird.png, using placeholder');
+      bird = loadImage('https://images.pexels.com/photos/326900/pexels-photo-326900.jpeg', 
+        () => console.log('Bird placeholder loaded successfully'), 
+        () => console.error('Failed to load bird placeholder image')
+      );
+    }
+  );
+  startDelayTimer = 120;
 }
 
 function spawnTree(x) {
-  let minGap = 150 * scaleFactor;
+  let minGap = 200 * scaleFactor;
   let maxGap = 400 * scaleFactor;
   let gapRange = maxGap - minGap;
-  let difficultyFactor = constrain(score / 30, 0, 1);
+  let difficultyFactor = constrain(score / 50, 0, 1);
   let gapSize = maxGap - gapRange * difficultyFactor;
   let gapY = random(gapSize, height - gapSize - 150 * scaleFactor);
   trees.push({ x: x, gapY: gapY, passed: false });
@@ -602,6 +711,7 @@ function startQuiz() {
     currentQuestionIndex++;
     quizTimer = 15 * 60;
     quizFade = 0;
+    console.log('Quiz started:', quiz.question, 'Options:', quiz.options);
   } else {
     resetGame();
   }
@@ -610,6 +720,7 @@ function startQuiz() {
 function resetGame() {
   gameState = 'gameover';
   confetti = [];
+  confettiPlayed = false;
   restartDelayTimer = 300;
 }
 
