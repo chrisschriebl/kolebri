@@ -333,7 +333,7 @@ function draw() {
       fill(255);
       textSize(20 * scaleFactor);
       text("oder Leertaste drücken", width / 2, btnY + btnHeight / 2 + 30 * scaleFactor);
-      text("(Bitte im Querformat spielen)", width / 2, btnY + btnHeight / 2 + 50 * scaleFactor);
+      text("(Bitte im Querformat spielen)", width / 2, btnY + btnHeight / 2 + 70 * scaleFactor);
       drawingContext.shadowBlur = 0;
     } else if (gameState === 'playing') {
       if (startDelayTimer > 0) {
@@ -473,7 +473,7 @@ function draw() {
       let questionWidth = width * 0.8;
       let questionHeight = height * 0.15;
       let questionX = width / 2;
-      let questionY = height * 0.1;
+      let questionY = height * 0.25;
 
       drawingContext.shadowBlur = 10;
       drawingContext.shadowColor = 'rgba(0, 0, 0, 0.3)';
@@ -532,7 +532,7 @@ function draw() {
 
       for (let i = 0; i < quiz.options.length; i++) {
         let x = width / 2;
-        let y = height * 0.25 + i * buttonSpacing;
+        let y = height * 0.4 + i * buttonSpacing;
         let scale = 1;
         
         if (mouseX > x - btnWidth / 2 && mouseX < x + btnWidth / 2 && mouseY > y - btnHeight / 2 && mouseY < y + btnHeight / 2) {
@@ -559,31 +559,27 @@ function draw() {
         drawingContext.shadowBlur = 0;
       }
 
-      let barWidth = max(200 * scaleFactor, 150);
-      let barHeight = max(15 * scaleFactor, 10);
-      let barX = width - 150 * scaleFactor;
-      let barY = 40 * scaleFactor;
+      let timerRadius = 20 * scaleFactor;
+      let timerX = width * 0.1;
+      let timerY = height * 0.25 + 1.5 * buttonSpacing;
       let timerProgress = quizTimer / (15 * 60);
-      let filledWidth = barWidth * timerProgress;
 
       drawingContext.shadowBlur = 5;
       drawingContext.shadowColor = 'rgba(0, 0, 0, 0.3)';
       fill(100);
-      rect(barX, barY, barWidth, barHeight, 10);
-      let gradient = drawingContext.createLinearGradient(barX - barWidth / 2, barY, barX + barWidth / 2, barY);
+      arc(timerX, timerY, timerRadius * 2, timerRadius * 2, 0, TWO_PI);
+      let gradient = drawingContext.createLinearGradient(timerX - timerRadius, timerY, timerX + timerRadius, timerY);
       gradient.addColorStop(0, color(255, 99, 71));
       gradient.addColorStop(1, color(255, 215, 0));
       drawingContext.fillStyle = gradient;
-      rectMode(CORNER);
-      rect(barX - barWidth / 2, barY - barHeight / 2, filledWidth, barHeight, 10);
-      rectMode(CENTER);
+      arc(timerX, timerY, timerRadius * 2, timerRadius * 2, -HALF_PI, -HALF_PI + TWO_PI * timerProgress, true);
       drawingContext.shadowBlur = 0;
 
       drawingContext.shadowBlur = 3;
       drawingContext.shadowColor = 'rgba(0, 0, 0, 0.5)';
       fill(255, 255 * quizFade);
-      textSize(12 * scaleFactor);
-      text(ceil(quizTimer / 60), barX, barY + 4 * scaleFactor);
+      textSize(16 * scaleFactor);
+      text(ceil(quizTimer / 60), timerX, timerY + 5 * scaleFactor);
       drawingContext.shadowBlur = 0;
 
       quizTimer--;
@@ -742,7 +738,7 @@ function handleInput() {
     } else if (gameState === 'quiz' && quiz && quizAnswerDelay <= 0) {
       for (let i = 0; i < quiz.options.length; i++) {
         let x = width / 2;
-        let y = height * 0.25 + i * (windowWidth < 768 ? 120 * scaleFactor : 80 * scaleFactor);
+        let y = height * 0.4 + i * (windowWidth < 768 ? 120 * scaleFactor : 80 * scaleFactor);
         let btnWidth = windowWidth < 768 ? max(300 * scaleFactor, 200) : max(350 * scaleFactor, 250);
         let btnHeight = windowWidth < 768 ? max(50 * scaleFactor, 40) : max(70 * scaleFactor, 60);
         let touchX = mouseX;
