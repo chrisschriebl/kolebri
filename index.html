@@ -49,6 +49,7 @@ let restartDelayTimer = 0;
 let gravityActive = false;
 let startDelayTimer = 0;
 let confettiPlayed = false;
+let invincibilityTimer = 0; // Neue Variable für Unverwundbarkeit nach Quizantwort
 
 const quizQuestions = [
   {
@@ -200,6 +201,7 @@ function setup() {
   gravityActive = false;
   startDelayTimer = 0;
   confettiPlayed = false;
+  invincibilityTimer = 0;
   
   // Mische die Fragen in zufälliger Reihenfolge
   shuffledQuestions = [...quizQuestions];
@@ -226,13 +228,11 @@ function draw() {
     let imgWidth, imgHeight, imgX, imgY;
 
     if (imgAspect > canvasAspect) {
-      // Bild ist breiter als der Canvas: Skaliere nach Höhe
       imgHeight = height;
       imgWidth = height * imgAspect;
       imgX = (width - imgWidth) / 2;
       imgY = 0;
     } else {
-      // Bild ist höher als der Canvas: Skaliere nach Breite
       imgWidth = width;
       imgHeight = width / imgAspect;
       imgX = 0;
@@ -298,7 +298,7 @@ function draw() {
     drawingContext.shadowColor = 'rgba(0, 0, 0, 0.5)';
     fill(255);
     textSize(20 * scaleFactor);
-    text("Drücke die Leertaste zum Spielen", width / 2, btnY + btnHeight / 2 + 30 * scaleFactor);
+    text("oder Leertaste drücken", width / 2, btnY + btnHeight / 2 + 30 * scaleFactor);
     drawingContext.shadowBlur = 0;
   } else if (gameState === 'playing') {
     if (startDelayTimer > 0) {
@@ -322,8 +322,11 @@ function draw() {
       rect(birdX - 25 * scaleFactor, birdY - 25 * scaleFactor, 50 * scaleFactor, 50 * scaleFactor);
     }
 
-    if (birdY > height || birdY < 0) {
-      resetGame();
+    // Kollisionsprüfung nur, wenn kein Unverwundbarkeitstimer aktiv ist
+    if (invincibilityTimer <= 0) {
+      if (birdY > height || birdY < 0) {
+        resetGame();
+      }
     }
 
     for (let i = trees.length - 1; i >= 0; i--) {
@@ -354,9 +357,12 @@ function draw() {
         rect(tree.x, tree.gapY + 150 * scaleFactor, 100 * scaleFactor, height - (tree.gapY + 150 * scaleFactor));
       }
 
-      if (birdX + 25 * scaleFactor > tree.x && birdX - 25 * scaleFactor < tree.x + 100 * scaleFactor) {
-        if (birdY - 25 * scaleFactor < tree.gapY - 100 * scaleFactor || birdY + 25 * scaleFactor > tree.gapY + 150 * scaleFactor) {
-          resetGame();
+      // Kollisionsprüfung nur, wenn kein Unverwundbarkeitstimer aktiv ist
+      if (invincibilityTimer <= 0) {
+        if (birdX + 25 * scaleFactor > tree.x && birdX - 25 * scaleFactor < tree.x + 100 * scaleFactor) {
+          if (birdY - 25 * scaleFactor < tree.gapY - 100 * scaleFactor || birdY + 25 * scaleFactor > tree.gapY + 150 * scaleFactor) {
+            resetGame();
+          }
         }
       }
 
@@ -400,6 +406,11 @@ function draw() {
 
     if (obstaclePauseTimer > 0) {
       obstaclePauseTimer--;
+    }
+
+    // Unverwundbarkeitstimer dekrementieren
+    if (invincibilityTimer > 0) {
+      invincibilityTimer--;
     }
 
     drawingContext.shadowBlur = 5;
@@ -528,9 +539,6 @@ function draw() {
       obstaclePauseTimer = 120;
     }
   } else if (gameState === 'quizResult') {
-    fill(0, 0, 0, 200);
-    rect(0, 0, width, height);
-
     textAlign(CENTER);
     textSize(48 * scaleFactor);
     drawingContext.shadowBlur = 10;
@@ -547,6 +555,7 @@ function draw() {
         gameState = 'playing';
         quiz = null;
         obstaclePauseTimer = 120;
+        invincibilityTimer = 120; // 2 Sekunden Unverwundbarkeit nach Quizantwort
       }
     }
   } else if (gameState === 'gameover') {
@@ -558,7 +567,7 @@ function draw() {
     text(`Punkte: ${score}`, width / 2, height / 2 - 40 * scaleFactor);
     text(`Richtige Fragen: ${correctAnswers}/15`, width / 2, height / 2);
     if (restartDelayTimer <= 0) {
-      text("Drücke die Leertaste um neu zu starten", width / 2, height / 2 + 40 * scaleFactor);
+      text("Bildschirm berühren oder Leertaste drücken um neu zu starten", width / 2, height / 2 + 40 * scaleFactor);
     } else {
       text(`Neustart möglich in ${ceil(restartDelayTimer / 60)} Sekunden`, width / 2, height / 2 + 40 * scaleFactor);
     }
