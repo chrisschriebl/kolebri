@@ -50,6 +50,8 @@ let gravityActive = false;
 let startDelayTimer = 0;
 let confettiPlayed = false;
 let invincibilityTimer = 0;
+let successTimer = 0;
+let kPressTimes = [];
 
 const quizQuestions = [
   {
@@ -202,6 +204,8 @@ function setup() {
   startDelayTimer = 0;
   confettiPlayed = false;
   invincibilityTimer = 0;
+  successTimer = 0;
+  kPressTimes = [];
   
   // Mische die Fragen in zufälliger Reihenfolge
   shuffledQuestions = [...quizQuestions];
@@ -211,8 +215,8 @@ function setup() {
   }
   currentQuestionIndex = 0;
   
-  // Größerer Abstand zwischen Bäumen im Hochformat
-  let treeSpacing = windowWidth < windowHeight ? 400 * scaleFactor : 300 * scaleFactor;
+  // Größerer Abstand zwischen Bäumen
+  let treeSpacing = windowWidth < 768 ? 500 * scaleFactor : (windowWidth < windowHeight ? 400 * scaleFactor : 300 * scaleFactor);
   for (let i = 0; i < 3; i++) {
     spawnTree(width + i * treeSpacing);
   }
@@ -295,13 +299,12 @@ function draw() {
     text("Spiel Starten", btnX, btnY + 7 * scaleFactor);
     drawingContext.shadowBlur = 0;
 
-    // Hinweis für Leertaste
+    // Hinweis für Leertaste und Querformat
     drawingContext.shadowBlur = 5;
     drawingContext.shadowColor = 'rgba(0, 0, 0, 0.5)';
     fill(255);
     textSize(20 * scaleFactor);
     text("oder Leertaste drücken", width / 2, btnY + btnHeight / 2 + 30 * scaleFactor);
-    // Neuer Hinweis für Querformat
     text("Bitte im Querformat spielen", width / 2, btnY + btnHeight / 2 + 50 * scaleFactor);
     drawingContext.shadowBlur = 0;
   } else if (gameState === 'playing') {
@@ -384,8 +387,13 @@ function draw() {
       }
     }
 
+    // Neuer Baum nur spawnen, wenn der letzte Baum weit genug entfernt ist
     if (trees.length < 3 && obstaclePauseTimer <= 0) {
-      spawnTree(width);
+      let lastTreeX = trees.length > 0 ? trees[trees.length - 1].x : -500 * scaleFactor;
+      let minTreeSpacing = windowWidth < 768 ? 500 * scaleFactor : (windowWidth < windowHeight ? 400 * scaleFactor : 300 * scaleFactor);
+      if (lastTreeX < width - minTreeSpacing) {
+        spawnTree(width);
+      }
     }
 
     for (let i = pinecones.length - 1; i >= 0; i--) {
@@ -441,6 +449,14 @@ function draw() {
     drawingContext.shadowBlur = 0;
 
     textAlign(CENTER);
+    // Anzeige der Fragenummer
+    drawingContext.shadowBlur = 5;
+    drawingContext.shadowColor = 'rgba(0, 0, 0, 0.5)';
+    fill(255);
+    textSize(20 * scaleFactor);
+    text(`Frage ${currentQuestionIndex}/15`, questionX, questionY - 20 * scaleFactor);
+    drawingContext.shadowBlur = 0;
+
     let questionText = quiz && quiz.question ? quiz.question : 'Fehler: Frage nicht verfügbar';
     let baseFontSize = 28 * scaleFactor;
     textSize(baseFontSize);
@@ -470,7 +486,7 @@ function draw() {
     let btnHeight = windowWidth < 768 ? max(60 * scaleFactor, 50) : max(70 * scaleFactor, 60);
     let maxButtonWidth = btnWidth * 0.9;
     let baseAnswerFontSize = 24 * scaleFactor;
-    let buttonSpacing = windowWidth < 768 ? 100 * scaleFactor : 80 * scaleFactor; // Kompakter auf Smartphone
+    let buttonSpacing = windowWidth < 768 ? 100 * scaleFactor : 80 * scaleFactor;
 
     let longestAnswer = quiz.options.reduce((a, b) => a.length > b.length ? a : b, '');
     textSize(baseAnswerFontSize);
@@ -554,14 +570,28 @@ function draw() {
 
     quizResultTimer--;
     if (quizResultTimer <= 0) {
-      if (totalQuestionsAnswered >= 15) {
-        resetGame();
+      if (correctAnswers >= 15) {
+        gameState = 'success';
+        successTimer = 300; // 5 Sekunden
       } else {
         gameState = 'playing';
         quiz = null;
         obstaclePauseTimer = 120;
-        invincibilityTimer = 120; // 2 Sekunden Unverwundbarkeit nach Quizantwort
+        invincibilityTimer = 120;
       }
+    }
+  } else if (gameState === 'success') {
+    // Schwarzer Bildschirm mit Kennwort
+    fill(0);
+    rect(0, 0, width, height);
+    textAlign(CENTER);
+    fill(255);
+    textSize(32 * scaleFactor);
+    text("Kennwort: Baumlehrpfad", width / 2, height / 2);
+    
+    successTimer--;
+    if (successTimer <= 0) {
+      setup(); // Spiel neu starten
     }
   } else if (gameState === 'gameover') {
     textAlign(CENTER);
@@ -625,6 +655,122 @@ function keyPressed() {
     birdVelocity = -8 * scaleFactor;
   } else if (key === ' ' && gameState === 'gameover' && restartDelayTimer <= 0) {
     setup();
+  } else if (key === 'k') {
+    // Dreimal "k" für Test des Success-Screens
+    kPressTimes.push(frameCount);
+    kPressTimes = kPressTimes.filter(time => frameCount - time < 60); // Innerhalb von 1 Sekunde
+    if (kPressTimes.length >= 3) {
+      gameState = 'success';
+      successTimer = 300; // 5 Sekunden
+      kPressTimes = [];
+    }
+  }
+}
+
+function mousePressed() {
+  handleInput();
+}
+
+function touchStarted() {
+  handleInput();
+  return false;
+}
+
+function handleInput() {
+  if (gameState === 'start') {
+    let btnWidth = max(200 * scaleFactor, 200);
+    let btnHeight = max(60 * scaleFactor, 60);
+    let btnX = width / 2;
+    let btnY = height / 2 + 50 * scaleFactor;
+    if (mouseX > btnX - btnWidth / 2 && mouseX < btnX + btnWidth / 2 &&
+        mouseY > btnY - btnHeight / 2 && mouseY < btnY + btnHeight / 2) {
+      startGame();
+    }
+  } else if (gameState === 'playing') {
+    if (startDoor {
+    // Schwarzer Bildschirm mit Kennwort
+    fill(0);
+    rect(0, 0, width, height);
+    textAlign(CENTER);
+    fill(255);
+    textSize(32 * scaleFactor);
+    text("Kennwort: Baumlehrpfad", width / 2, height / 2);
+    
+    successTimer--;
+    if (successTimer <= 0) {
+      setup(); // Spiel neu starten
+    }
+  } else if (gameState === 'gameover') {
+    textAlign(CENTER);
+    textSize(32 * scaleFactor);
+    drawingContext.shadowBlur = 5;
+    drawingContext.shadowColor = 'rgba(0, 0, 0, 0.5)';
+    fill(255);
+    text(`Punkte: ${score}`, width / 2, height / 2 - 40 * scaleFactor);
+    text(`Richtige Fragen: ${correctAnswers}/15`, width / 2, height / 2);
+    if (restartDelayTimer <= 0) {
+      text("Bildschirm berühren oder Leertaste drücken um neu zu starten", width / 2, height / 2 + 40 * scaleFactor);
+    } else {
+      text(`Neustart möglich in ${ceil(restartDelayTimer / 60)} Sekunden`, width / 2, height / 2 + 40 * scaleFactor);
+    }
+    drawingContext.shadowBlur = 0;
+
+    if (restartDelayTimer > 0) {
+      restartDelayTimer--;
+    }
+
+    if (!confettiPlayed && confetti.length === 0) {
+      for (let i = 0; i < 100; i++) {
+        confetti.push({
+          x: random(width),
+          y: random(-50, 0),
+          size: random(5, 15) * scaleFactor,
+          speed: random(2, 5) * scaleFactor,
+          color: color(random(255), random(255), random(255)),
+          rotation: random(TWO_PI),
+          rotSpeed: random(-0.1, 0.1)
+        });
+      }
+      confettiPlayed = true;
+    }
+
+    for (let i = confetti.length - 1; i >= 0; i--) {
+      let c = confetti[i];
+      c.y += c.speed;
+      c.rotation += c.rotSpeed;
+      push();
+      translate(c.x, c.y);
+      rotate(c.rotation);
+      fill(c.color);
+      rect(0, 0, c.size, c.size);
+      pop();
+      if (c.y > height) {
+        confetti.splice(i, 1);
+      }
+    }
+  }
+}
+
+function keyPressed() {
+  if (key === ' ' && gameState === 'start') {
+    startGame();
+  } else if (key === ' ' && gameState === 'playing') {
+    if (startDelayTimer > 0) {
+      startDelayTimer = 0;
+      gravityActive = true;
+    }
+    birdVelocity = -8 * scaleFactor;
+  } else if (key === ' ' && gameState === 'gameover' && restartDelayTimer <= 0) {
+    setup();
+  } else if (key === 'k') {
+    // Dreimal "k" für Test des Success-Screens
+    kPressTimes.push(frameCount);
+    kPressTimes = kPressTimes.filter(time => frameCount - time < 60); // Innerhalb von 1 Sekunde
+    if (kPressTimes.length >= 3) {
+      gameState = 'success';
+      successTimer = 300; // 5 Sekunden
+      kPressTimes = [];
+    }
   }
 }
 
