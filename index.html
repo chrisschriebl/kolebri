@@ -12,7 +12,7 @@
       touch-action: none;
       width: 100%;
       height: 100vh;
-      background-color: #008000;
+      background-color: #8B4513;
     }
     canvas {
       display: block;
@@ -34,6 +34,7 @@ let score = 0;
 let gameState = 'start';
 let quiz = null;
 let quizTimer = 0;
+let quizAnswerDelay = 0;
 let obstaclesPassed = 0;
 let quizFade = 0;
 let hoverIndex = -1;
@@ -254,7 +255,7 @@ function setup() {
 function draw() {
   try {
     clear();
-    background(0, 100, 0);
+    background(139, 69, 19);
 
     if (newBgImg && newBgImg.width > 0) {
       let imgAspect = newBgImg.width / newBgImg.height;
@@ -324,7 +325,7 @@ function draw() {
       drawingContext.shadowColor = 'rgba(0, 0, 0, 0.5)';
       fill(255);
       textSize(24 * scaleFactor);
-      text("Spiel Starten", btnX, btnY + 7 * scaleFactor);
+      text("Spiel starten", btnX, btnY + 7 * scaleFactor);
       drawingContext.shadowBlur = 0;
 
       drawingContext.shadowBlur = 5;
@@ -332,7 +333,7 @@ function draw() {
       fill(255);
       textSize(20 * scaleFactor);
       text("oder Leertaste drücken", width / 2, btnY + btnHeight / 2 + 30 * scaleFactor);
-      text("Bitte im Querformat spielen", width / 2, btnY + btnHeight / 2 + 50 * scaleFactor);
+      text("(Bitte im Querformat spielen)", width / 2, btnY + btnHeight / 2 + 50 * scaleFactor);
       drawingContext.shadowBlur = 0;
     } else if (gameState === 'playing') {
       if (startDelayTimer > 0) {
@@ -465,6 +466,10 @@ function draw() {
         quizFade = min(quizFade + 0.02, 1);
       }
 
+      if (quizAnswerDelay > 0) {
+        quizAnswerDelay--;
+      }
+
       let questionWidth = width * 0.8;
       let questionHeight = height * 0.15;
       let questionX = width / 2;
@@ -514,7 +519,7 @@ function draw() {
       let btnHeight = windowWidth < 768 ? max(60 * scaleFactor, 50) : max(70 * scaleFactor, 60);
       let maxButtonWidth = btnWidth * 0.9;
       let baseAnswerFontSize = 24 * scaleFactor;
-      let buttonSpacing = windowWidth < 768 ? 100 * scaleFactor : 80 * scaleFactor;
+      let buttonSpacing = windowWidth < 768 ? 120 * scaleFactor : 80 * scaleFactor;
 
       let longestAnswer = quiz.options.reduce((a, b) => a.length > b.length ? a : b, '');
       textSize(baseAnswerFontSize);
@@ -527,12 +532,12 @@ function draw() {
 
       for (let i = 0; i < quiz.options.length; i++) {
         let x = width / 2;
-        let y = windowWidth < 768 ? (height / 2 - 80 * scaleFactor + i * buttonSpacing) : (height / 2 + i * buttonSpacing - 40 * scaleFactor);
+        let y = windowWidth < 768 ? (height / 2 - 40 * scaleFactor + i * buttonSpacing) : (height / 2 + i * buttonSpacing);
         let scale = 1;
         
         if (mouseX > x - btnWidth / 2 && mouseX < x + btnWidth / 2 && mouseY > y - btnHeight / 2 && mouseY < y + btnHeight / 2) {
           hoverIndex = i;
-          scale = 1.1;
+          scale = quizAnswerDelay <= 0 ? 1.1 : 1;
         } else if (hoverIndex === i) {
           hoverIndex = -1;
         }
@@ -570,7 +575,7 @@ function draw() {
       gradient.addColorStop(1, color(255, 215, 0));
       drawingContext.fillStyle = gradient;
       rectMode(CORNER);
-      rect(barX - barWidth / 2, barY - barHeight / 2, filledWidth, barHeight, 10);
+      rect(barX - barWidth / 2, barY - btnHeight / 2, filledWidth, barHeight, 10);
       rectMode(CENTER);
       drawingContext.shadowBlur = 0;
 
@@ -631,6 +636,7 @@ function draw() {
       text(`Punkte: ${score}`, width / 2, height / 2 - 40 * scaleFactor);
       text(`Richtige Fragen: ${correctAnswers}/15`, width / 2, height / 2);
       if (restartDelayTimer <= 0) {
+        textSize(20 * scaleFactor);
         text("Bildschirm berühren oder Leertaste drücken um neu zu starten", width / 2, height / 2 + 40 * scaleFactor);
       } else {
         text(`Neustart möglich in ${ceil(restartDelayTimer / 60)} Sekunden`, width / 2, height / 2 + 40 * scaleFactor);
@@ -733,10 +739,10 @@ function handleInput() {
         gravityActive = true;
       }
       birdVelocity = -8 * scaleFactor;
-    } else if (gameState === 'quiz' && quiz) {
+    } else if (gameState === 'quiz' && quiz && quizAnswerDelay <= 0) {
       for (let i = 0; i < quiz.options.length; i++) {
         let x = width / 2;
-        let y = windowWidth < 768 ? (height / 2 - 80 * scaleFactor + i * 100 * scaleFactor) : (height / 2 + i * 80 * scaleFactor - 40 * scaleFactor);
+        let y = windowWidth < 768 ? (height / 2 - 40 * scaleFactor + i * 120 * scaleFactor) : (height / 2 + i * 80 * scaleFactor);
         let btnWidth = max(350 * scaleFactor, 250);
         let btnHeight = windowWidth < 768 ? max(60 * scaleFactor, 50) : max(70 * scaleFactor, 60);
         let touchX = mouseX;
@@ -796,17 +802,7 @@ function spawnTree(x) {
     let gapY = random(minY, maxY);
     trees.push({ x: x, gapY: gapY, passed: false });
     if (random() < 0.7) {
-      let pineconeY;
-      let region = floor(random(3));
-      if (region === 0 && gapY >= 100 * scaleFactor) {
-        pineconeY = random(50 * scaleFactor, gapY - 50 * scaleFactor);
-      } else if (region === 1) {
-        pineconeY = random(gapY + 50 * scaleFactor, gapY + gapSize - 50 * scaleFactor);
-      } else if (region === 2 && gapY + gapSize <= height - 100 * scaleFactor) {
-        pineconeY = random(gapY + gapSize + 50 * scaleFactor, height - 50 * scaleFactor);
-      } else {
-        pineconeY = random(gapY + 50 * scaleFactor, gapY + gapSize - 50 * scaleFactor);
-      }
+      let pineconeY = random(gapY + 50 * scaleFactor, gapY + gapSize - 50 * scaleFactor);
       pinecones.push({ x: x + (50 - 30 * pineconeDifficulty) * scaleFactor, y: pineconeY });
     }
   } catch (e) {
@@ -822,6 +818,7 @@ function startQuiz() {
       currentQuestionIndex++;
       quizTimer = 15 * 60;
       quizFade = 0;
+      quizAnswerDelay = 120;
       console.log('Quiz started:', quiz.question, 'Options:', quiz.options);
     } else {
       resetGame();
