@@ -498,7 +498,7 @@ function draw() {
     drawingContext.shadowColor = 'rgba(0, 0, 0, 0.3)';
     fill(100);
     rect(barX, barY, barWidth, barHeight, 10);
-    let gradient = drawingContext.createLinearGradient(barX - barWidth / 2, y, barX + barWidth / 2, y);
+    let gradient = drawingContext.createLinearGradient(barX - barWidth / 2, barY, barX + barWidth / 2, barY);
     gradient.addColorStop(0, color(255, 99, 71));
     gradient.addColorStop(1, color(255, 215, 0));
     drawingContext.fillStyle = gradient;
@@ -698,6 +698,7 @@ function startQuiz() {
     currentQuestionIndex++;
     quizTimer = 15 * 60;
     quizFade = 0;
+    console.log('Quiz started:', quiz.question, 'Options:', quiz.options); // Debugging-Log
   } else {
     resetGame();
   }
