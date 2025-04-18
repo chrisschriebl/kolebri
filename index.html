@@ -473,7 +473,7 @@ function draw() {
       let questionWidth = width * 0.8;
       let questionHeight = height * 0.15;
       let questionX = width / 2;
-      let questionY = height / 4;
+      let questionY = height * 0.1;
 
       drawingContext.shadowBlur = 10;
       drawingContext.shadowColor = 'rgba(0, 0, 0, 0.3)';
@@ -515,10 +515,10 @@ function draw() {
       ];
 
       rectMode(CENTER);
-      let btnWidth = max(350 * scaleFactor, 250);
-      let btnHeight = windowWidth < 768 ? max(60 * scaleFactor, 50) : max(70 * scaleFactor, 60);
+      let btnWidth = windowWidth < 768 ? max(300 * scaleFactor, 200) : max(350 * scaleFactor, 250);
+      let btnHeight = windowWidth < 768 ? max(50 * scaleFactor, 40) : max(70 * scaleFactor, 60);
       let maxButtonWidth = btnWidth * 0.9;
-      let baseAnswerFontSize = 24 * scaleFactor;
+      let baseAnswerFontSize = 20 * scaleFactor;
       let buttonSpacing = windowWidth < 768 ? 120 * scaleFactor : 80 * scaleFactor;
 
       let longestAnswer = quiz.options.reduce((a, b) => a.length > b.length ? a : b, '');
@@ -527,12 +527,12 @@ function draw() {
       let answerFontSize = baseAnswerFontSize;
       if (longestAnswerWidth > maxButtonWidth) {
         answerFontSize = baseAnswerFontSize * (maxButtonWidth / longestAnswerWidth);
-        answerFontSize = max(answerFontSize, 14 * scaleFactor);
+        answerFontSize = max(answerFontSize, 12 * scaleFactor);
       }
 
       for (let i = 0; i < quiz.options.length; i++) {
         let x = width / 2;
-        let y = windowWidth < 768 ? (height / 2 - 40 * scaleFactor + i * buttonSpacing) : (height / 2 + i * buttonSpacing);
+        let y = height * 0.25 + i * buttonSpacing;
         let scale = 1;
         
         if (mouseX > x - btnWidth / 2 && mouseX < x + btnWidth / 2 && mouseY > y - btnHeight / 2 && mouseY < y + btnHeight / 2) {
@@ -559,10 +559,10 @@ function draw() {
         drawingContext.shadowBlur = 0;
       }
 
-      let barWidth = max(300 * scaleFactor, 200);
-      let barHeight = max(20 * scaleFactor, 15);
-      let barX = width / 2;
-      let barY = height - 60 * scaleFactor;
+      let barWidth = max(200 * scaleFactor, 150);
+      let barHeight = max(15 * scaleFactor, 10);
+      let barX = width - 150 * scaleFactor;
+      let barY = 40 * scaleFactor;
       let timerProgress = quizTimer / (15 * 60);
       let filledWidth = barWidth * timerProgress;
 
@@ -575,15 +575,15 @@ function draw() {
       gradient.addColorStop(1, color(255, 215, 0));
       drawingContext.fillStyle = gradient;
       rectMode(CORNER);
-      rect(barX - barWidth / 2, barY - btnHeight / 2, filledWidth, barHeight, 10);
+      rect(barX - barWidth / 2, barY - barHeight / 2, filledWidth, barHeight, 10);
       rectMode(CENTER);
       drawingContext.shadowBlur = 0;
 
       drawingContext.shadowBlur = 3;
       drawingContext.shadowColor = 'rgba(0, 0, 0, 0.5)';
       fill(255, 255 * quizFade);
-      textSize(16 * scaleFactor);
-      text(ceil(quizTimer / 60), barX, barY + 5 * scaleFactor);
+      textSize(12 * scaleFactor);
+      text(ceil(quizTimer / 60), barX, barY + 4 * scaleFactor);
       drawingContext.shadowBlur = 0;
 
       quizTimer--;
@@ -742,9 +742,9 @@ function handleInput() {
     } else if (gameState === 'quiz' && quiz && quizAnswerDelay <= 0) {
       for (let i = 0; i < quiz.options.length; i++) {
         let x = width / 2;
-        let y = windowWidth < 768 ? (height / 2 - 40 * scaleFactor + i * 120 * scaleFactor) : (height / 2 + i * 80 * scaleFactor);
-        let btnWidth = max(350 * scaleFactor, 250);
-        let btnHeight = windowWidth < 768 ? max(60 * scaleFactor, 50) : max(70 * scaleFactor, 60);
+        let y = height * 0.25 + i * (windowWidth < 768 ? 120 * scaleFactor : 80 * scaleFactor);
+        let btnWidth = windowWidth < 768 ? max(300 * scaleFactor, 200) : max(350 * scaleFactor, 250);
+        let btnHeight = windowWidth < 768 ? max(50 * scaleFactor, 40) : max(70 * scaleFactor, 60);
         let touchX = mouseX;
         let touchY = mouseY;
         if (touchX > x - btnWidth / 2 && touchX < x + btnWidth / 2 && touchY > y - btnHeight / 2 && touchY < y + btnHeight / 2) {
