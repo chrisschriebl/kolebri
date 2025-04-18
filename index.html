@@ -159,11 +159,11 @@ const quizQuestions = [
 
 function preload() {
   try {
-    // Lade das Hintergrundbild mit relativem Pfad, mit Fallback auf das Platzhalterbild
+    // Lade die Bilder mit relativen Pfaden, mit Fallback auf Platzhalterbilder
     newBgImg = loadImage('./background.jpg', 
       () => console.log('New Background loaded successfully'), 
       () => {
-        console.error('Failed to load new background image, using placeholder');
+        console.error('Failed to load ./background.jpg, using placeholder');
         bgImg = loadImage('https://images.pexels.com/photos/38136/pexels-photo-38136.jpeg', 
           () => console.log('Background placeholder loaded successfully'), 
           () => console.error('Failed to load background placeholder image')
@@ -171,11 +171,10 @@ function preload() {
       }
     );
 
-    // Lade die anderen Bilder von GitHub, mit Fallback auf die Platzhalterbilder
-    newTreeImg = loadImage('https://github.com/chrisschriebl/kolebri/blob/main/stammunten.png?raw=true', 
+    newTreeImg = loadImage('./stammunten.png', 
       () => console.log('New Lower Obstacle loaded successfully'), 
       () => {
-        console.error('Failed to load new lower obstacle image, using placeholder');
+        console.error('Failed to load ./stammunten.png, using placeholder');
         treeImg = loadImage('https://images.pexels.com/photos/1612351/pexels-photo-1612351.jpeg', 
           () => console.log('Lower Obstacle placeholder loaded successfully'), 
           () => console.error('Failed to load lower obstacle placeholder image')
@@ -183,10 +182,10 @@ function preload() {
       }
     );
 
-    newUpperTreeImg = loadImage('https://github.com/chrisschriebl/kolebri/blob/main/stammoben.png?raw=true', 
+    newUpperTreeImg = loadImage('./stammoben.png', 
       () => console.log('New Upper Obstacle loaded successfully'), 
       () => {
-        console.error('Failed to load new upper obstacle image, using placeholder');
+        console.error('Failed to load ./stammoben.png, using placeholder');
         upperTreeImg = loadImage('https://images.pexels.com/photos/164353/pexels-photo-164353.jpeg', 
           () => console.log('Upper Obstacle placeholder loaded successfully'), 
           () => console.error('Failed to load upper obstacle placeholder image')
@@ -194,10 +193,10 @@ function preload() {
       }
     );
 
-    newPineconeImg = loadImage('https://github.com/chrisschriebl/kolebri/blob/main/zapfen.png?raw=true', 
+    newPineconeImg = loadImage('./zapfen.png', 
       () => console.log('New Zapfen loaded successfully'), 
       () => {
-        console.error('Failed to load new zapfen image, using placeholder');
+        console.error('Failed to load ./zapfen.png, using placeholder');
         pineconeImg = loadImage('https://images.pexels.com/photos/380284/pexels-photo-380284.jpeg', 
           () => console.log('Zapfen placeholder loaded successfully'), 
           () => console.error('Failed to load zapfen placeholder image')
@@ -499,7 +498,7 @@ function draw() {
     drawingContext.shadowColor = 'rgba(0, 0, 0, 0.3)';
     fill(100);
     rect(barX, barY, barWidth, barHeight, 10);
-    let gradient = drawingContext.createLinearGradient(barX - barWidth / 2, barY, barX + barWidth / 2, barY);
+    let gradient = drawingContext.createLinearGradient(barX - barWidth / 2, y, barX + barWidth / 2, y);
     gradient.addColorStop(0, color(255, 99, 71));
     gradient.addColorStop(1, color(255, 215, 0));
     drawingContext.fillStyle = gradient;
@@ -666,10 +665,10 @@ function handleInput() {
 
 function startGame() {
   gameState = 'playing';
-  newBird = loadImage('https://github.com/chrisschriebl/kolebri/blob/main/bird.png?raw=true', 
+  newBird = loadImage('./bird.png', 
     () => console.log('New Bird loaded successfully'), 
     () => {
-      console.error('Failed to load new bird image, using placeholder');
+      console.error('Failed to load ./bird.png, using placeholder');
       bird = loadImage('https://images.pexels.com/photos/326900/pexels-photo-326900.jpeg', 
         () => console.log('Bird placeholder loaded successfully'), 
         () => console.error('Failed to load bird placeholder image')
